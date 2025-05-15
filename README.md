@@ -14,13 +14,13 @@ COMO BAIXAR (CLONAR) SEU PROJETO EM OUTRA MÁQUINA:
 3. No VS Code, abra o terminal (atalho: Ctrl + `).
 4. Vá até a pasta onde quer salvar o projeto:
 - cd caminho/da/pasta/destino
-. (ou ir até a pasta manualmente, pelo gerenciador de arquivos em "Open Folder" no canto superior esquerdo do seu VS Code)
+- (ou ir até a pasta manualmente, pelo gerenciador de arquivos em "Open Folder" no canto superior esquerdo do seu VS Code)
 5. No terminal, clone o repositório com o seguinte comando:
 - git clone https://github.com/btpjamal/projetoFaculdade
 6. Acesse a pasta clonada:
 - cd projetoFaculdade
 7. Instale as dependências do projeto:
-.Se for um projeto com Node.js, React, React Native, etc., você provavelmente precisa instalar as dependências com:
+- Se for um projeto com Node.js, React, React Native, etc., você provavelmente precisa instalar as dependências com:
 - npm install
 8. Após clonar o projeto, é importante que cada colaborador crie ou selecione a branch na qual deseja contribuir. Por exemplo, se for trabalhar em uma nova funcionalidade, o colaborador deve criar uma branch específica com:
 - git checkout -b minha-nova-funcionalidade
@@ -38,13 +38,13 @@ COMO SUBIR O PROJETO ATUALIZADO NO GITHUB COM BRANCHES E PULL REQUESTS
 4. Verifique o status das alterações: Use o comando a seguir para ver os arquivos modificados:
 - git status
 . Os arquivos que ainda não foram adicionados ao commit aparecerão em vermelho, enquanto os que já estão prontos para commit ficam em verde.
-5. Adicione os arquivos modificados: Se quiser adicionar todas as alterações:
+5. Adicione os arquivos modificados, se quiser adicionar todas as alterações:
 - git add .
-. Ou, se preferir adicionar apenas arquivos específicos, por exemplo:
+- Ou, se preferir adicionar apenas arquivos específicos, por exemplo:
 - git add src/App.js
 6. Faça o commit das alterações: Sempre descreva as mudanças realizadas:
 - git commit -m "Descrição das mudanças realizadas"
-. Caso queria verificar novamente os arquivos, repare que após o commit, estarão verdes:
+- Caso queria verificar novamente os arquivos, repare que após o commit, estarão verdes:
 - git status
 7. Envie (push) a nova branch para o GitHub: Em vez de enviar as alterações diretamente para a branch main, envie sua branch para o repositório remoto:
 - git push origin nome-da-sua-branch
