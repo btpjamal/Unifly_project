@@ -52,12 +52,12 @@ export default function Login({ navigation }) {
       if (userData.tipo === 'admin') {
         navigation.reset({
           index: 0,
-          routes: [{ name: 'DashboardProprietario', params: { comercioId: userData.comercioId } }]
+          routes: [{ name: 'dashboardProprietario', params: { comercioId: userData.comercioId } }]
         });
       } else {
         navigation.reset({
           index: 0,
-          routes: [{ name: 'Cardapio' }]
+          routes: [{ name: 'cardapio' }]
         });
       }
 
@@ -103,7 +103,7 @@ export default function Login({ navigation }) {
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
+        <TouchableOpacity onPress={() => navigation.navigate('cadastro')}>
           <Text style={styles.registerText}>Não tem uma conta? Cadastre-se aqui</Text>
         </TouchableOpacity>
       </View>

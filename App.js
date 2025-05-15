@@ -6,7 +6,7 @@ import SplashScreen from './screens/splashscreen';
 import PaginaInicial from './screens/paginainicial';
 import Login from './screens/login';
 import Cadastro from './screens/cadastro';
-import Cardapio from './screens/cardapio';
+import CardapioCliente from './screens/cardapio';
 import Carrinho from './screens/carrinho';
 import Pagamento from './screens/pagamento';
 import StatusPedido from './screens/statusPedido';
@@ -40,7 +40,7 @@ export default function App() {
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="paginainicial" component={PaginaInicial} />
         <Stack.Screen name="login" component={Login} />
-        <Stack.Screen name="cardapio" component={Cardapio} />
+        <Stack.Screen name="cardapio" component={CardapioCliente} />
         <Stack.Screen name="cadastro" component={Cadastro} />
         <Stack.Screen name="carrinho" component={Carrinho} />
         <Stack.Screen name="pagamento" component={Pagamento} />
