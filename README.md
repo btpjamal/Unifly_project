@@ -1,29 +1,42 @@
-# Sample Snack app
+TODO LIST
+- criar um mapa mental para acompanhar melhor a navegação entre as telas e suas funções
+- criar um menu de estabelecimentos após o Login do cliente, esse menu deve listar todos os estabelecimentos registrados no banco de dados
+- após o cliente selecionar um estabelecimento, ele será direcionado ao cardápio do mesmo
+- o cardápio do estabelecimento é gerido pelo proprietário do mesmo, todos os produtos informados pelo proprietário na sua dashboard de proprietário, devem aparecer listados no cardapio do cliente
 
-Open the `App.js` file to start writing some code. You can preview the changes directly on your phone or tablet by scanning the **QR code** or use the iOS or Android emulators. When you're done, click **Save** and share the link!
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-When you're ready to see everything that Expo provides (or if you want to use your own editor) you can **Download** your project and use it with [expo cli](https://docs.expo.dev/get-started/installation/#expo-cli)).
+COMO BAIXAR (CLONAR) SEU PROJETO EM OUTRA MÁQUINA:
 
-All projects created in Snack are publicly available, so you can easily share the link to this project via link, or embed it on a web page with the `<>` button.
+1. Instale o Git na outra máquina (se ainda não tiver):
+https://git-scm.com/downloads
+2. Abra o Visual Studio Code na nova máquina.
+3. No VS Code, abra o terminal (atalho: Ctrl + `).
+4. Vá até a pasta onde quer salvar o projeto:
+cd caminho/da/pasta/destino
+(ou ir até a pasta manualmente, pelo gerenciador de arquivos em "Open Folder" no canto superior esquerdo do seu VS Code)
+5. No terminal, clone o repositório com o seguinte comando:
+- git clone https://github.com/btpjamal/projetoFaculdade
+6. Acesse a pasta clonada:
+- cd projetoFaculdade
+7. (Opcional) Instale as dependências do projeto:
+Se for um projeto com Node.js, React, React Native, etc., você provavelmente precisa instalar as dependências com:
+- npm install
 
-If you're having problems, you can tweet to us [@expo](https://twitter.com/expo) or ask in our [forums](https://forums.expo.dev/c/expo-dev-tools/61) or [Discord](https://chat.expo.dev/).
-
-Snack is Open Source. You can find the code on the [GitHub repo](https://github.com/expo/snack).
-
-Extraia a pasta
-Certifique-se de ter instalado o Node.js
-No terminal do windows (cmd ou Powershell), execute como Administrador
-Insira o seguinte comando -> Set-ExecutionPolicy RemoteSigned
-confirme com (s)
-Em seu Visual Studio ou no próprio terminal do seu windows, acesse a pasta onde foram extraidos os arquivos,
-insira -> cd (nome da pasta, sem os parenteses)
-Para ter certeza de que está no diretório correto, digite -> ls (nome da pasta)
-Caso o terminal informe a listagem de arquivos, está acessando o local correto
-Verifique se todos os arquivos presentes na pasta estão sendo listados pelo terminal
-Insira o comando -> npm install
-(para instalar todas as dependencias)
-Insira o comando -> npx expo start
-(para abrir um menu de opções, selecione a opção desejada para rodar o aplicativo)
-Caso queira abrir pela Web, pode ser que o terminal informe a falta de um módulo,
-execute a instalação digitando -> npm install (nome do módulo que o próprio terminal irá informar, basta copiar e colar)
-Após isso, feche e o terminal e abra outro, execute o comando -> npx expo start e tente rodar pela web novamente.
+COMO SUBIR O PROJETO ATUALIZADO NO GITHUB:
+1. Verifique se está na pasta do projeto clonado:
+No terminal do VS Code:
+- cd nome-do-repositorio
+2. Veja o status das alterações:
+- git status
+Você verá os arquivos modificados em vermelho (não adicionados ainda) ou verde (já prontos para commit).
+3. Adicione os arquivos modificados:
+Se quiser adicionar todos os arquivos alterados:
+- git add .
+Ou adicione apenas arquivos específicos, ex:
+- git add src/App.js
+4. Faça o commit das alterações:
+- git commit -m "Descreva aqui o que você mudou"
+5. Envie (push) as alterações para o GitHub:
+- git push origin main
+Pronto! O repositório do GitHub estará atualizado com suas novas alterações feitas na outra máquina.
