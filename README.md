@@ -23,20 +23,26 @@ cd caminho/da/pasta/destino
 Se for um projeto com Node.js, React, React Native, etc., você provavelmente precisa instalar as dependências com:
 - npm install
 
-COMO SUBIR O PROJETO ATUALIZADO NO GITHUB:
-1. Verifique se está na pasta do projeto clonado:
-No terminal do VS Code:
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+COMO SUBIR O PROJETO ATUALIZADO NO GITHUB COM BRANCHES E PULL REQUESTS
+
+Verifique a pasta do projeto: No terminal do VS Code, navegue até a pasta do repositório clonado:
 - cd nome-do-repositorio
-2. Veja o status das alterações:
+Crie uma nova branch para suas alterações: É importante evitar alterar a branch main diretamente. Crie uma branch específica para a sua funcionalidade ou correção:
+- git checkout -b nome-da-sua-branch
+Substitua nome-da-sua-branch por um nome que descreva a alteração, como feature/login ou bugfix/corrige-header.
+Verifique o status das alterações: Use o comando a seguir para ver os arquivos modificados:
 - git status
-Você verá os arquivos modificados em vermelho (não adicionados ainda) ou verde (já prontos para commit).
-3. Adicione os arquivos modificados:
-Se quiser adicionar todos os arquivos alterados:
+Os arquivos que ainda não foram adicionados ao commit aparecerão em vermelho, enquanto os que já estão prontos para commit ficam em verde.
+Adicione os arquivos modificados: Se quiser adicionar todas as alterações:
 - git add .
-Ou adicione apenas arquivos específicos, ex:
+Ou, se preferir adicionar apenas arquivos específicos, por exemplo:
 - git add src/App.js
-4. Faça o commit das alterações:
-- git commit -m "Descreva aqui o que você mudou"
-5. Envie (push) as alterações para o GitHub:
-- git push origin main
-Pronto! O repositório do GitHub estará atualizado com suas novas alterações feitas na outra máquina.
+Faça o commit das alterações: Sempre descreva as mudanças realizadas:
+- git commit -m "Descrição das mudanças realizadas"
+Caso queria verificar novamente os arquivos, repare que após o commit, estarão verdes:
+- git status
+Envie (push) a nova branch para o GitHub: Em vez de enviar as alterações diretamente para a branch main, envie sua branch para o repositório remoto:
+- git push origin nome-da-sua-branch
+Abra um Pull Request no GitHub: Após o push, acesse o GitHub e crie um pull request da sua branch para a branch main. Por que isso é importante? O pull request permite que os demais membros do grupo revisem e comentem as alterações antes que elas sejam mescladas na branch principal, garantindo que o código permaneça seguro e de qualidade.
