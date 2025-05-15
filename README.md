@@ -49,3 +49,7 @@ COMO SUBIR O PROJETO ATUALIZADO NO GITHUB COM BRANCHES E PULL REQUESTS
 7. Envie (push) a nova branch para o GitHub: Em vez de enviar as alterações diretamente para a branch main, envie sua branch para o repositório remoto:
 - git push origin nome-da-sua-branch
 8. Abra um Pull Request no GitHub: Após o push, acesse o GitHub e crie um pull request da sua branch para a branch main. Por que isso é importante? O pull request permite que os demais membros do grupo revisem e comentem as alterações antes que elas sejam mescladas na branch principal, garantindo que o código permaneça seguro e de qualidade.
+
+****Se quiser clonar e já começar em uma branch específica, você pode usar:
+- git clone -b nome-da-branch https://github.com/btpjamal/projetoFaculdade
+Isso já muda para essa branch após o clone.  
