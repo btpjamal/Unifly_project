@@ -24,7 +24,7 @@ Se for um projeto com Node.js, React, React Native, etc., você provavelmente pr
 - npm install
 8. Após clonar o projeto, é importante que cada colaborador crie ou selecione a branch na qual deseja contribuir. Por exemplo, se for trabalhar em uma nova funcionalidade, o colaborador deve criar uma branch específica com:
 - git checkout -b minha-nova-funcionalidade
-Isso evita alterações diretas na branch main e possibilita que as mudanças passem por revisão via Pull Request.
+- Isso evita alterações diretas na branch main e possibilita que as mudanças passem por revisão via Pull Request.
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
