@@ -19,9 +19,12 @@ cd caminho/da/pasta/destino
 - git clone https://github.com/btpjamal/projetoFaculdade
 6. Acesse a pasta clonada:
 - cd projetoFaculdade
-7. (Opcional) Instale as dependências do projeto:
+7. Instale as dependências do projeto:
 Se for um projeto com Node.js, React, React Native, etc., você provavelmente precisa instalar as dependências com:
 - npm install
+8. Após clonar o projeto, é importante que cada colaborador crie ou selecione a branch na qual deseja contribuir. Por exemplo, se for trabalhar em uma nova funcionalidade, o colaborador deve criar uma branch específica com:
+- git checkout -b minha-nova-funcionalidade
+Isso evita alterações diretas na branch main e possibilita que as mudanças passem por revisão via Pull Request.
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
