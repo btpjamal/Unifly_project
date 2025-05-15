@@ -37,7 +37,7 @@ COMO SUBIR O PROJETO ATUALIZADO NO GITHUB COM BRANCHES E PULL REQUESTS
 3. Substitua nome-da-sua-branch por um nome que descreva a alteração, como feature/login ou bugfix/corrige-header.
 4. Verifique o status das alterações: Use o comando a seguir para ver os arquivos modificados:
 - git status
-. Os arquivos que ainda não foram adicionados ao commit aparecerão em vermelho, enquanto os que já estão prontos para commit ficam em verde.
+- Os arquivos que ainda não foram adicionados ao commit aparecerão em vermelho, enquanto os que já estão prontos para commit ficam em verde.
 5. Adicione os arquivos modificados, se quiser adicionar todas as alterações:
 - git add .
 - Ou, se preferir adicionar apenas arquivos específicos, por exemplo:
