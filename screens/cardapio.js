@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { buscarProdutos } from '../firebaseService';
+import { buscarProdutosDoEstabelecimento } from '../firebaseService';
 import {
   View,
   Text,
@@ -11,37 +11,38 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function CardapioCliente({ navigation }) {
+export default function CardapioCliente({ navigation, route }) {
+  const { comercioId } = route.params; // Adicione esta linha
   const [produtos, setProdutos] = useState([]);
   const [carrinho, setCarrinho] = useState([]);
 
   // Carregar dados iniciais
   useEffect(() => {
-    const carregarDados = async () => {
-      try {
-        const [produtosFirebase, carrinhoLocal] = await Promise.all([
-          buscarProdutos(),
-          AsyncStorage.getItem('carrinho')
-        ]);
-        
-        setProdutos(produtosFirebase);
-        if (carrinhoLocal) setCarrinho(JSON.parse(carrinhoLocal));
-      } catch (error) {
-        Alert.alert('Erro', 'Não foi possível carregar o cardápio');
-        console.error(error);
-      }
-    };
+  const carregarDados = async () => {
+    try {
+      const [produtosFirebase, carrinhoLocal] = await Promise.all([
+        buscarProdutosDoEstabelecimento(comercioId), // Função modificada
+        AsyncStorage.getItem(`carrinho_${comercioId}`) // Carrinho por estabelecimento
+      ]);
+      
+      setProdutos(produtosFirebase);
+      if (carrinhoLocal) setCarrinho(JSON.parse(carrinhoLocal));
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível carregar o cardápio');
+      console.error(error);
+    }
+  };
 
-    carregarDados();
-  }, []);
+  carregarDados();
+}, [comercioId]);
 
   // Persistir carrinho
   useEffect(() => {
-    const salvarCarrinho = async () => {
-      await AsyncStorage.setItem('carrinho', JSON.stringify(carrinho));
-    };
-    salvarCarrinho();
-  }, [carrinho]);
+  const salvarCarrinho = async () => {
+    await AsyncStorage.setItem(`carrinho_${comercioId}`, JSON.stringify(carrinho));
+  };
+  salvarCarrinho();
+}, [carrinho, comercioId]); // Adicione a dependência
 
   // Adicionar item ao carrinho
   const adicionarAoCarrinho = (produto) => {
@@ -60,11 +61,12 @@ export default function CardapioCliente({ navigation }) {
 
   // Navegação para o carrinho
   const irParaCarrinho = () => {
-    navigation.navigate('carrinho', { 
-      itens: carrinho,
-      total: carrinho.reduce((sum, item) => sum + (item.preco * item.quantidade), 0)
-    });
-  };
+  navigation.navigate('carrinho', { 
+    itens: carrinho,
+    total: carrinho.reduce((sum, item) => sum + (item.preco * item.quantidade), 0),
+    comercioId // Passe o ID do estabelecimento
+  });
+};
 
   return (
     <ImageBackground source={require('../assets/background3.jpg')} style={styles.background}>
@@ -82,7 +84,9 @@ export default function CardapioCliente({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.titulo}>Cardápio</Text>
+      <Text style={styles.titulo}>
+        {produtos[0]?.nomeEstabelecimento || 'Cardápio'} {/* Se tiver nome no documento */}
+      </Text>
 
       <FlatList
         data={produtos}

@@ -66,19 +66,21 @@ export const autenticarUsuario = async (email, senha) => {
 
 
 //Buscar Produtos
-export const buscarProdutos = async () => {
+// Função modificada para buscar produtos específicos
+export const buscarProdutosDoEstabelecimento = async (comercioId) => {
   try {
-    const produtosSnapshot = await getDocs(collection(db, 'produtos'));
-    const produtos = produtosSnapshot.docs.map(doc => ({
+    const produtosRef = collection(db, 'comercios', comercioId, 'produtos');
+    const snapshot = await getDocs(produtosRef);
+    return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
-    return produtos;
   } catch (error) {
     console.error('Erro ao buscar produtos:', error);
     return [];
   }
 };
+
 //Salvar Pedido
 export const salvarPedido = async (token, uid, itens, total) => {
   try {
@@ -146,3 +148,18 @@ export const obterTipoUsuario = async (uid) => {
   return userDoc.data().tipo;
 };
 
+export const buscarEstabelecimentos = async () => {
+  try {
+    const estabelecimentosRef = collection(db, 'comercios');
+    const querySnapshot = await getDocs(estabelecimentosRef);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+  } catch (error) {
+    console.error("Erro ao buscar estabelecimentos:", error);
+    return [];
+  }
+};
