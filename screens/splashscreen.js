@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Image, StyleSheet, Text } from 'react-native';
+import { View, Image, StyleSheet, Text, ActivityIndicator, ImageBackground } from 'react-native';
 
 export default function SplashScreen({ navigation }) {
   useEffect(() => {
@@ -11,34 +11,40 @@ export default function SplashScreen({ navigation }) {
   }, [navigation]);
 
   return (
+    
     <View style={styles.container}>
       <Image
-        source={require('../assets/logo.png')}
+        source={require('../assets/Logo.png')}
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.nomeApp}>Carregando...</Text>
+      <Text style={styles.loadingText}>Iniciando a plataforma...</Text>
+      <ActivityIndicator size="large" color="#4A6A5A" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  background:{
+    flex: 1,
+    resizeMode: 'cover',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#8a241c',
+    backgroundColor: '#0b0f1a',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   logo: {
-    flex: 1,
-    height: 370,
-    width: 335,
-    marginBottom: 20,
+    width: 250,
+    height: 250,
+    marginBottom: 30,
   },
-  nomeApp: {
-    fontSize: 32,
-    color: '#fff',
-    fontFamily: 'NewRocker-Regular',
-    marginTop: 20,
+  loadingText: {
+    fontSize: 30,
+    color: '#4A6A5A',
+    fontFamily: 'System',
+    marginBottom: 10,
   },
 });

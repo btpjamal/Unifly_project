@@ -74,9 +74,8 @@ export default function Login({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../assets/background3.jpg')} style={styles.background}>
       <View style={styles.container}>
-        <Text style={styles.title}>Login</Text>
+        <h1 style={styles.title}>Login</h1>
 
         <TextInput
           style={styles.input}
@@ -106,8 +105,10 @@ export default function Login({ navigation }) {
         <TouchableOpacity onPress={() => navigation.navigate('cadastro')}>
           <Text style={styles.registerText}>Não tem uma conta? Cadastre-se aqui</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.backbutton} onPress={() => navigation.goBack()}>
+            <Text style={styles.botaoGoback}>{"<"}</Text>
+        </TouchableOpacity>
       </View>
-    </ImageBackground>
   );
 }
 
@@ -117,9 +118,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20, // Distância do topo da tela
     left: 20, // Distância do lado esquerdo
-    backgroundColor: '#8a241c', // Vermelho vinho
+    backgroundColor: '#1c2c40',
     borderWidth: 3,
-    borderColor: '#8a241c',
+    borderColor: '#f3ece7',
     borderRadius: 30, // Bordas arredondadas
     paddingVertical: 10,
     paddingHorizontal: 15,
@@ -129,20 +130,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5, // Sombra no Android
   },
-  background: {
-    flex: 1,
-    resizeMode: 'cover',
-  },
   container: {
-    backgroundColor: 'rgba(0, 0, 0, 0)',
+    backgroundColor: '#fffff',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 30,
+    fontSize: 50,
     marginBottom: 20,
-    fontFamily: 'NewRocker-Regular',
+    fontFamily: 'Rubik',
+    color:'purple',
   },
   input: {
     width: '80%',
@@ -152,35 +150,32 @@ const styles = StyleSheet.create({
     borderColor: '#CCCCCC',
     borderRadius: 5,
     backgroundColor: '#F9F9F9',
-    fontFamily: 'NewRocker-Regular',
+    fontFamily: 'Roboto-Medium',
   },
   buttonentrar: {
     margin: 10,
-    backgroundColor: '#8a241c', // Tom de vermelho mais escuro e sombrio
+    backgroundColor: '#1c2c40',
     borderWidth: 3,
-    borderColor: '#8a241c', // Vermelho queimado para um efeito "rasgado"
-    borderRadius: 30, // Bordas levemente arredondadas, menos "perfeitas"
+    borderColor: '#f3ece7',
+    borderRadius: 30,
     paddingVertical: 12,
     paddingHorizontal: 28,
-    shadowColor: '#3c1f1e', // Sombra escura para profundidade
+    shadowColor: 'black',
     shadowOffset: { width: 6, height: 6 },
     shadowOpacity: 0.7,
     shadowRadius: 4,
-    elevation: 5, // Sombra no Android
+    elevation: 5,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontFamily: 'NewRocker-Regular',
+    fontFamily: 'Roboto-Medium',
   },
   registerText: {
     marginTop: 20,
     fontSize: 20,
-    color: '#8A241C',
-    fontFamily: 'NewRocker-Regular',
+    color: '#4A6A5A',
+    fontFamily: 'Roboto-Medium',
     textDecorationLine: 'underline',
   },
 });
-
-
-
