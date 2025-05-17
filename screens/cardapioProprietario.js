@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { buscarProdutosComercio, adicionarProduto, atualizarProduto, excluirProduto } from '../firebaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export default function CardapioProprietario({ navigation }) {
   const [produtos, setProdutos] = useState([]);

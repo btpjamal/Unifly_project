@@ -1,6 +1,6 @@
 //Autenticação com SDK
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, collection, getDocs, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, addDoc, serverTimestamp, query, where, orderBy } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 export const cadastrarUsuario = async ({ nome, email, senha, tipo, nomeComercio }) => {
@@ -82,8 +82,9 @@ export const buscarProdutosDoEstabelecimento = async (comercioId) => {
 };
 
 //Salvar Pedido
-export const salvarPedido = async (token, uid, itens, total) => {
+export const salvarPedido = async (token, uid, itens, total, comercioNome) => {
   try {
+    if (!comercioNome) throw new Error("Nome do estabelecimento não definido!");
     const pedido = {
       token,
       uid,
@@ -91,6 +92,7 @@ export const salvarPedido = async (token, uid, itens, total) => {
       itens,
       status: 'pendente',
       criadoEm: serverTimestamp(),
+      comercioNome
     };
 
     await addDoc(collection(db, 'pedidos'), pedido);
@@ -104,13 +106,22 @@ export const salvarPedido = async (token, uid, itens, total) => {
 export const buscarPedidos = async (token, uid) => {
   try {
     const pedidosRef = collection(db, 'pedidos');
-    const q = query(pedidosRef, where('uid', '==', uid));
+    const q = query(
+      pedidosRef,
+      where('uid', '==', uid),
+      orderBy('criadoEm', 'desc')
+    );
+
     const snapshot = await getDocs(q);
 
-    const pedidos = snapshot.docs.map(doc => ({
-      ...doc.data(),
-      id: doc.id,
-    }));
+    const pedidos = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+        criadoEm: data.criadoEm?.toDate() || new Date(), // Fallback seguro
+      };
+    });
 
     return pedidos;
   } catch (error) {

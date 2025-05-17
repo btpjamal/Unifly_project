@@ -37,8 +37,8 @@ export default function App() {
   return (
     <Text style={styles.text}>Minha fonte global!</Text>,
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash" component={SplashScreen} />
+      <Stack.Navigator initialRouteName="splashscreen" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="splashscreen" component={SplashScreen} />
         <Stack.Screen name="paginainicial" component={PaginaInicial} />
         <Stack.Screen name="login" component={Login} />
         <Stack.Screen name="cardapio" component={CardapioCliente} />

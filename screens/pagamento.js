@@ -25,7 +25,7 @@ export default function Pagamento({ navigation, route }) {
     const carrinho = route.params?.carrinho || [];
     const totalNum = parseFloat(total);
 
-    await salvarPedido(token, uid, carrinho, totalNum);
+    await salvarPedido(token, uid, carrinho, totalNum, route.params.comercioNome);
 
     setPedidoConfirmado(true);
     setTimeout(() => {

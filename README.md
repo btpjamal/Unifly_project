@@ -1,8 +1,20 @@
 TODO LIST
 - criar um mapa mental para acompanhar melhor a navegação entre as telas e suas funções
-- criar um menu de estabelecimentos após o Login do cliente, esse menu deve listar todos os estabelecimentos registrados no banco de dados
-- após o cliente selecionar um estabelecimento, ele será direcionado ao cardápio do mesmo
-- o cardápio do estabelecimento é gerido pelo proprietário do mesmo, todos os produtos informados pelo proprietário na sua dashboard de proprietário, devem aparecer listados no cardapio do cliente
+- criar um menu de estabelecimentos após o Login do cliente, esse menu deve listar todos os estabelecimentos registrados no banco de dados - OK
+- após o cliente selecionar um estabelecimento, ele será direcionado ao cardápio do mesmo - OK
+- o cardápio do estabelecimento é gerido pelo proprietário do mesmo, todos os produtos informados pelo proprietário na sua dashboard de proprietário, devem aparecer listados no cardapio do cliente - OK
+- o fornecedor pode personalizar o seu cardapio com cores e temas da sua loja, para facilitar a vizualização do cliente em categorias - NECESSÁRIO DISCUTIR A IDÉIA
+- barra de pesquiza para que os clientes possam pesquisar o estabelecimento e a categoria que ele quer buscar - VOU TENTAR FAZER DEPOIS (JAMAL)
+- Testar todo o lado do cliente e análisar oque pode ser feito - PODE SER NECESSÁRIA UMA REUNIÃO PARA DISCUTIR IDÉIAS
+- Terminar de incrementar as páginas e funcionalidades do lado do proprietáro - PODE SER NECESSÁRIA UMA REUNIÃO PARA DISCUTIR IDÉIAS
+
+OQUE EU FIZ (JAMAL):
+- Incrementei um header na "EstabelecimentosScreen" com botão para sair(fazer logout), titulo da página centralizado e botão de perfil
+- Histórico de pedidos no perfil foi aprimorado, agora mostra o nome do estabelecimento, data registrada a partir do servidor do banco de dados (mais exata)
+- A navegação entre o Dashboard do proprietário e o cardapio do proprietário agora está funcionando (necessário algumas revisões depois)
+- Ao confirmar um pedido, o botão retorna ao menu de estabelecimentos
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

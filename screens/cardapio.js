@@ -10,9 +10,12 @@ import {
   Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export default function CardapioCliente({ navigation, route }) {
-  const { comercioId } = route.params; // Adicione esta linha
+  const { comercioId } = route.params;
+   const [nomeEstabelecimento, setNomeEstabelecimento] = useState('');
   const [produtos, setProdutos] = useState([]);
   const [carrinho, setCarrinho] = useState([]);
 
@@ -20,6 +23,13 @@ export default function CardapioCliente({ navigation, route }) {
   useEffect(() => {
   const carregarDados = async () => {
     try {
+      const estabelecimentoRef = doc(db, 'comercios', comercioId);
+      const estabelecimentoSnap = await getDoc(estabelecimentoRef);
+      
+      if (estabelecimentoSnap.exists()) {
+        setNomeEstabelecimento(estabelecimentoSnap.data().nome);
+      }
+
       const [produtosFirebase, carrinhoLocal] = await Promise.all([
         buscarProdutosDoEstabelecimento(comercioId), // Função modificada
         AsyncStorage.getItem(`carrinho_${comercioId}`) // Carrinho por estabelecimento
@@ -64,29 +74,36 @@ export default function CardapioCliente({ navigation, route }) {
   navigation.navigate('carrinho', { 
     itens: carrinho,
     total: carrinho.reduce((sum, item) => sum + (item.preco * item.quantidade), 0),
-    comercioId // Passe o ID do estabelecimento
+    comercioId, // Passe o ID do estabelecimento
+    comercioNome: nomeEstabelecimento
   });
 };
 
   return (
     <ImageBackground source={require('../assets/background3.jpg')} style={styles.background}>
+      
       <View style={styles.header}>
         <TouchableOpacity 
-          style={styles.botaoPerfil}
-          onPress={() => navigation.navigate('perfil')}>
-          <Text style={styles.botaoTexto}>👤 Perfil</Text>
+          style={styles.backbutton} 
+          onPress={() => navigation.goBack()}>
+         <Text style={styles.botaoGoback}>{"<"}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.botaoCarrinhoHeader}
-          onPress={irParaCarrinho}>
-          <Text style={styles.botaoTexto}>🛒 ({carrinho.length})</Text>
-        </TouchableOpacity>
+      <View style={styles.tituloContainer}>
+        <Text style={styles.titulo} numberOfLines={1}>
+        {nomeEstabelecimento || 'Cardápio'}
+        </Text>
       </View>
 
-      <Text style={styles.titulo}>
-        {produtos[0]?.nomeEstabelecimento || 'Cardápio'} {/* Se tiver nome no documento */}
-      </Text>
+
+      <TouchableOpacity 
+        style={styles.botaoPerfil}
+        onPress={() => navigation.navigate('perfil')}>
+        <Text style={styles.botaoTexto}>👤 Perfil</Text>
+      </TouchableOpacity>
+      </View>
+
+      
 
       <FlatList
         data={produtos}
@@ -115,33 +132,60 @@ export default function CardapioCliente({ navigation, route }) {
       <TouchableOpacity 
         style={styles.botaoCarrinhoFlutuante}
         onPress={irParaCarrinho}>
-        <Text style={styles.botaoTexto}>Ver Carrinho ({carrinho.length})</Text>
+        <Text style={styles.botaoTexto}>Ver Carrinho 🛒({carrinho.length})</Text>
       </TouchableOpacity>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  header: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: 15,
+  backgroundColor: 'rgba(138, 36, 28, 0.9)',
+  width: '100%'
+},
+backbutton: {
+  backgroundColor: '#3c1f1e',
+  padding: 10,
+  borderRadius: 20,
+  zIndex: 1,
+  width: 40,
+  height: 40,
+  justifyContent: 'center',
+  alignItems: 'center'
+},
+tituloContainer: {
+  flex: 1,
+  marginHorizontal: 10
+},
+titulo: {
+  fontSize: 20,
+  color: '#fff',
+  fontFamily: 'NewRocker-Regular',
+  textAlign: 'center',
+  textShadowColor: 'rgba(0, 0, 0, 0.75)',
+  textShadowOffset: { width: 1, height: 1 },
+  textShadowRadius: 2
+},
+botaoPerfil: {
+  backgroundColor: '#3c1f1e',
+  padding: 10,
+  borderRadius: 20,
+  zIndex: 1
+},
+botaoGoback: {
+  color: '#fff',
+  fontSize: 20,
+  lineHeight: 24
+},
+ background: {
     flex: 1,
     resizeMode: 'cover'
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 15,
-    backgroundColor: 'rgba(138, 36, 28, 0.9)'
-  },
-  titulo: {
-    fontSize: 28,
-    textAlign: 'center',
-    marginVertical: 15,
-    color: '#fff',
-    fontFamily: 'NewRocker-Regular',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 5
-  },
+  
   lista: {
     paddingHorizontal: 15,
     paddingBottom: 80
@@ -183,12 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
-  botaoPerfil: {
-    backgroundColor: '#3c1f1e',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20
-  },
+  
   botaoCarrinhoHeader: {
     backgroundColor: '#306030',
     paddingVertical: 8,

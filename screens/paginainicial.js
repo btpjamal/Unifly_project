@@ -4,7 +4,7 @@ import { Button } from 'react-native-elements';
 export default function Paginainicial({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
-      <Image style={styles.logo} source={require('../assets/Logo.png')} />
+      <Image style={styles.logo} source={require('../assets/logo.png')} />
       
       <Button
         title="Login"
@@ -21,6 +21,7 @@ export default function Paginainicial({ navigation }) {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

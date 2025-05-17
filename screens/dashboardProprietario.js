@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 export default function DashboardProprietario({ route }) {
   const { comercioId } = route.params;
-
+  const navigation = useNavigation(); // Adicione esta linha
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Painel do Proprietário</Text>

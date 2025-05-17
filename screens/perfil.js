@@ -136,7 +136,7 @@ export default function PerfilScreen({ navigation }) {
           <Text style={styles.botaoTexto}>{editando ? 'Salvar' : 'Editar'}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.botaocardapio} onPress={() => navigation.navigate('cardapio')}>
+        <TouchableOpacity style={styles.botaocardapio} onPress={() => navigation.goBack()}>
           <Text style={styles.botaoTexto}>{"<"}</Text>
         </TouchableOpacity>
 
@@ -150,7 +150,8 @@ export default function PerfilScreen({ navigation }) {
         ) : (
           historicoPedidos.map((pedido, index) => (
             <View key={index} style={styles.pedido}>
-              <Text style={styles.pedidoTexto}>Pedido #{index + 1} - {new Date(pedido.criadoEm?.seconds * 1000).toLocaleString()}</Text>
+              <Text style={styles.pedidoTexto}>Estabelecimento: {pedido.comercioNome || "Estabelecimento não identificado"}</Text>
+              <Text style={styles.pedidoTexto}>Pedido #{index + 1} - {pedido.criadoEm?.toLocaleString() || "Data não disponível"}</Text>
               <Text style={styles.pedidoTexto}>Total: R$ {pedido.total.toFixed(2)}</Text>
               {pedido.itens.map((item, idx) => (
                 <Text key={idx} style={styles.pedidoTexto}>

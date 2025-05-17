@@ -34,8 +34,8 @@ export default function StatusPedido({ navigation, route }) {
           <Text style={styles.statusText}>{statusList[statusIndex]}</Text>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('cardapio')}>
-          <Text style={styles.buttonText}>Voltar ao Cardápio</Text>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EstabelecimentosScreen')}>
+          <Text style={styles.buttonText}>Voltar aos estabelecimentos</Text>
         </TouchableOpacity>
       </View>
     </ImageBackground>

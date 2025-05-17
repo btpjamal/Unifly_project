@@ -51,12 +51,14 @@ export default function Carrinho({ route, navigation }) {
   const carrinho = itensCarrinho.map(item => ({
     nome: item.nome,
     preco: item.preco,
-    quantidade: item.quantidade
+    quantidade: item.quantidade,
+    comercioNome: route.params.comercioNome
   }));
 
   navigation.navigate("pagamento", {
     total: parseFloat(calcularTotal()),
-    carrinho: carrinho
+    carrinho: carrinho,
+    comercioNome: route.params.comercioNome
   });
 };
 
