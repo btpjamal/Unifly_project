@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "coffeeno9",
+    "name": "projetoFaculdade",
     "slug": "snack-a2e164c2-42ff-40a1-9a61-ee03ce73179b",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,6 +23,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "IMGUR_CLIENT_ID": "f2a84689fd8ad8e"
     }
   }
 }

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ImageBackground } from 'react-native';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import { buscarEstabelecimentos } from '../firebaseService';
 
 export default function EstabelecimentosScreen({ navigation }) {
   const [estabelecimentos, setEstabelecimentos] = useState([]);

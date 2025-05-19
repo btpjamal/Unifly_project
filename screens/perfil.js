@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAuth } from 'firebase/auth';
+import { getAuth, signOut } from 'firebase/auth';
 import { buscarPedidos } from '../firebaseService';
+import Constants from 'expo-constants';
+
 
 export default function PerfilScreen({ navigation }) {
   const [nome, setNome] = useState('');
@@ -22,40 +24,28 @@ export default function PerfilScreen({ navigation }) {
   const [foto, setFoto] = useState(null);
   const [editando, setEditando] = useState(false);
   const [historicoPedidos, setHistoricoPedidos] = useState([]);
-  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
-  const [botaoColor, setBotaoColor] = useState('#8A241C');
-  const [textoColor, setTextoColor] = useState('#000000');
 
   useEffect(() => {
     const carregarDados = async () => {
       const auth = getAuth();
       const usuario = auth.currentUser;
+      let uid = null;
 
       if (usuario) {
         setEmail(usuario.email);
+        uid = usuario.uid;
       }
 
-      const nomeSalvo = await AsyncStorage.getItem('nome');
-      const enderecoSalvo = await AsyncStorage.getItem('endereco');
-      const fotoSalva = await AsyncStorage.getItem('fotoPerfil');
-      const bgColorSalvo = await AsyncStorage.getItem('bgColor');
-      const botaoColorSalvo = await AsyncStorage.getItem('botaoColor');
-      const textoColorSalvo = await AsyncStorage.getItem('textoColor');
+      if (uid) {
+        const nomeSalvo = await AsyncStorage.getItem(`nome_${uid}`);
+        const enderecoSalvo = await AsyncStorage.getItem(`endereco_${uid}`);
+        const fotoSalva = await AsyncStorage.getItem(`fotoPerfil_${uid}`);
 
-      if (nomeSalvo) {
-        setNome(nomeSalvo);
-      } else {
-        console.log("Nome não encontrado no AsyncStorage");
-      }
-      if (enderecoSalvo) setEndereco(enderecoSalvo);
-      if (fotoSalva) setFoto(fotoSalva);
-      if (bgColorSalvo) setBackgroundColor(bgColorSalvo);
-      if (botaoColorSalvo) setBotaoColor(botaoColorSalvo);
-      if (textoColorSalvo) setTextoColor(textoColorSalvo);
+        setNome(nomeSalvo || '');
+        setEndereco(enderecoSalvo || '');
+        setFoto(fotoSalva || null);
 
-      const token = await AsyncStorage.getItem('userToken');
-      const uid = await AsyncStorage.getItem('userUid');
-      if (token && uid) {
+        const token = await AsyncStorage.getItem('userToken');
         const pedidos = await buscarPedidos(token, uid);
         setHistoricoPedidos(pedidos);
       }
@@ -67,31 +57,82 @@ export default function PerfilScreen({ navigation }) {
   const escolherFoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
-      quality: 1,
+      quality: 0.3, // Qualidade reduzida
       aspect: [1, 1],
     });
 
     if (!result.canceled) {
-      const imageUri = result.assets[0].uri;
-      setFoto(imageUri);
+      setFoto(result.assets[0].uri); // Armazena o URI da imagem
     }
   };
 
   const salvarDados = async () => {
-    await AsyncStorage.setItem('nome', nome);
-    await AsyncStorage.setItem('endereco', endereco);
-    if (foto) await AsyncStorage.setItem('fotoPerfil', foto);
-    await AsyncStorage.setItem('bgColor', backgroundColor);
-    await AsyncStorage.setItem('botaoColor', botaoColor);
-    await AsyncStorage.setItem('textoColor', textoColor);
+  const auth = getAuth();
+  const usuario = auth.currentUser;
+
+  if (!usuario) {
+    Alert.alert('Erro', 'Usuário não autenticado.');
+    return;
+  }
+
+  try {
+    const uid = usuario.uid;
+    
+    // Salva os dados independentemente de ter foto ou não
+    await AsyncStorage.setItem(`nome_${uid}`, nome);
+    await AsyncStorage.setItem(`endereco_${uid}`, endereco);
+
+    // Se houver foto, faz o upload
+    if (foto && foto.startsWith('file://')) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const formData = new FormData();
+      formData.append('image', {
+        uri: foto,
+        type: 'image/jpeg',
+        name: 'foto_perfil.jpg',
+      });
+
+      const imgurClientId = Constants.manifest.extra.IMGUR_CLIENT_ID;
+      const response = await fetch('https://api.imgur.com/3/image', {
+        method: 'POST',
+        headers: {
+          Authorization: `Client-ID ${imgurClientId}`,
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        const urlImagem = data.data.link;
+        await AsyncStorage.setItem(`fotoPerfil_${uid}`, urlImagem);
+        setFoto(urlImagem);
+      } else {
+        Alert.alert('Aviso', 'Foto não foi atualizada, mas outros dados foram salvos.');
+      }
+    }
+
     setEditando(false);
     Alert.alert('Sucesso', 'Informações atualizadas!');
-  };
+  } catch (error) {
+    if (error.message.includes('429')) {
+      Alert.alert('Erro', 'Limite de uploads excedido. Foto não foi atualizada, mas outros dados foram salvos.');
+    } else {
+      Alert.alert('Erro', 'Falha ao salvar os dados. Tente novamente.');
+    }
+  }
+};
 
   return (
     <ImageBackground
       source={require('../assets/background3.jpg')}
-      style={[styles.background, { backgroundColor: backgroundColor }]}
+      style={styles.background}
       resizeMode="cover"
     >
       <ScrollView contentContainerStyle={styles.container}>
@@ -100,12 +141,12 @@ export default function PerfilScreen({ navigation }) {
             source={foto ? { uri: foto } : require('../assets/avatarpadrao.png')}
             style={styles.fotoPerfil}
           />
-          {editando && <Text style={[styles.trocarFoto, { color: textoColor }]}>Trocar Foto</Text>}
+          {editando && <Text style={[styles.trocarFoto]}>Trocar Foto</Text>}
         </TouchableOpacity>
 
-        <Text style={[styles.titulo, { color: textoColor }]}>Meu Perfil</Text>
+        <Text style={[styles.titulo]}>Meu Perfil</Text>
 
-        <Text style={[styles.label, { color: textoColor }]}>Nome</Text>
+        <Text style={[styles.label]}>Nome</Text>
         {/* Nome agora é apenas um campo de texto não editável */}
         <TextInput
           style={styles.input}
@@ -113,7 +154,7 @@ export default function PerfilScreen({ navigation }) {
           value={nome}  // Garantir que o valor do nome seja exibido aqui
         />
 
-        <Text style={[styles.label, { color: textoColor }]}>E-mail</Text>
+        <Text style={[styles.label]}>E-mail</Text>
         <TextInput
           style={[styles.input, { backgroundColor: '#eee', color: '#888' }]}
           editable={false}
@@ -121,7 +162,7 @@ export default function PerfilScreen({ navigation }) {
           value={email}
         />
 
-        <Text style={[styles.label, { color: textoColor }]}>Endereço</Text>
+        <Text style={[styles.label]}>Endereço</Text>
         <TextInput
           style={styles.input}
           editable={editando}
@@ -140,13 +181,22 @@ export default function PerfilScreen({ navigation }) {
           <Text style={styles.botaoTexto}>{"<"}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.botaologout} onPress={() => navigation.navigate('paginainicial')}>
-          <Text style={styles.botaoTexto}>{"Sair"}</Text>
-        </TouchableOpacity>
+        <TouchableOpacity style={styles.botaologout} onPress={async () => {
+          try {
+            const auth = getAuth();
+            await signOut(auth);
+            navigation.navigate('splashscreen');
+          }catch (error) {
+            Alert.alert('Erro', 'Não foi possível sair. Tente novamente.');
+          }
+        }}
+>
+  <Text style={styles.botaoTexto}>{"Sair"}</Text>
+</TouchableOpacity>
 
-        <Text style={[styles.subtitulo, { color: textoColor }]}>Histórico de Pedidos</Text>
+        <Text style={[styles.subtitulo]}>Histórico de Pedidos</Text>
         {historicoPedidos.length === 0 ? (
-          <Text style={[styles.pedidoTexto, { color: textoColor }]}>Nenhum pedido encontrado.</Text>
+          <Text style={[styles.pedidoTexto]}>Nenhum pedido encontrado.</Text>
         ) : (
           historicoPedidos.map((pedido, index) => (
             <View key={index} style={styles.pedido}>
@@ -178,6 +228,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontFamily: 'NewRocker-Regular',
     textAlign: 'center',
+    color: '#333', // Cor fixa
   },
   subtitulo: {
     fontSize: 22,
@@ -190,6 +241,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
     alignSelf: 'flex-start',
+    color: '#333', // Cor fixa
   },
   input: {
     backgroundColor: '#F9F9F9',
@@ -274,3 +326,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
