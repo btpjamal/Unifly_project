@@ -7,7 +7,8 @@ import {
   FlatList,
   TouchableOpacity,
   ImageBackground,
-  Alert
+  Alert,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc } from 'firebase/firestore';
@@ -78,6 +79,25 @@ export default function CardapioCliente({ navigation, route }) {
     comercioNome: nomeEstabelecimento
   });
 };
+// Renderiza cada item do cardápio
+  const renderItem = ({ item }) => (
+    <View style={styles.itemContainer}>
+      { item.foto ? (
+          <Image source={{ uri: item.foto }} style={styles.productImage} />
+        ) : (
+          <View style={[styles.productImage, styles.imagePlaceholder]}>
+            <Text style={styles.imagePlaceholderText}>Sem foto</Text>
+          </View>
+        )
+      }
+      <Text style={styles.productName}>{item.nome}</Text>
+      <Text style={styles.productDescription}>{item.descricao}</Text>
+      <Text style={styles.productPrice}>R$ {parseFloat(item.preco).toFixed(2)}</Text>
+      <TouchableOpacity onPress={() => adicionarAoCarrinho(item)} style={styles.addButton}>
+        <Text style={styles.addButtonText}>Adicionar ao Carrinho</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <ImageBackground source={require('../assets/background3.jpg')} style={styles.background}>
@@ -111,6 +131,7 @@ export default function CardapioCliente({ navigation, route }) {
         contentContainerStyle={styles.lista}
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
+            <Image source={{ uri: item.foto }} style={styles.productImage} />
             <View style={styles.infoProduto}>
               <Text style={styles.nome}>{item.nome}</Text>
               <Text style={styles.descricao}>{item.descricao}</Text>
@@ -256,5 +277,12 @@ botaoGoback: {
     fontSize: 16,
     marginTop: 20,
     fontFamily: 'NewRocker-Regular'
-  }
+  },
+  productImage: {
+  width: 100,
+  height: 100,
+  marginRight: 10,
+  borderRadius: 8,
+  resizeMode: 'cover'
+},
 });

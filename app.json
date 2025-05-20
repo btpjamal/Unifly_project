@@ -24,8 +24,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra": {
-      "IMGUR_CLIENT_ID": "f2a84689fd8ad8e"
-    }
+    "plugins": [
+      "expo-font"
+    ]
   }
+  
 }

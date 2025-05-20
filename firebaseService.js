@@ -1,6 +1,6 @@
 //Autenticação com SDK
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, collection, getDocs, addDoc, serverTimestamp, query, where, orderBy } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, addDoc, serverTimestamp, query, where, orderBy, updateDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 export const cadastrarUsuario = async ({ nome, email, senha, tipo, nomeComercio }) => {
