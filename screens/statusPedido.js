@@ -1,11 +1,18 @@
 // screens/statuspedido.js
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  TouchableOpacity,
+  FlatList,
+} from "react-native";
 
-const statusList = ['Pedido Recebido', 'Em Preparo', 'Pronto para Retirada'];
+const statusList = ["Pedido Recebido", "Em Preparo", "Pronto para Retirada"];
 
 export default function StatusPedido({ navigation, route }) {
-  const { numeroPedido } = route.params;
+  const { numeroPedido, lojas = [] } = route.params;
   const [statusIndex, setStatusIndex] = useState(0);
 
   useEffect(() => {
@@ -18,13 +25,13 @@ export default function StatusPedido({ navigation, route }) {
           return prevIndex;
         }
       });
-    }, 3000); // Atualiza a cada 3 segundos
+    }, 3000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.background}>
+    <View style={styles.fundo}>
       <View style={styles.container}>
         <Text style={styles.title}>Status do Pedido</Text>
 
@@ -34,63 +41,91 @@ export default function StatusPedido({ navigation, route }) {
           <Text style={styles.statusText}>{statusList[statusIndex]}</Text>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EstabelecimentosScreen')}>
+        <Text style={styles.subtitulo}>Estabelecimentos envolvidos:</Text>
+        <FlatList
+          data={lojas}
+          keyExtractor={(item, index) => `${item}_${index}`}
+          renderItem={({ item }) => (
+            <Text style={styles.lojaItem}>🏪 {item}</Text>
+          )}
+          contentContainerStyle={styles.listaLojas}
+        />
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("EstabelecimentosScreen")}
+        >
           <Text style={styles.buttonText}>Voltar aos estabelecimentos</Text>
         </TouchableOpacity>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
   title: {
     fontSize: 28,
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
     marginBottom: 15,
-    fontFamily: 'NewRocker-Regular',
+    fontFamily: "NewRocker-Regular",
   },
   pedido: {
     fontSize: 20,
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
     marginBottom: 20,
-    fontFamily: 'NewRocker-Regular',
+    fontFamily: "NewRocker-Regular",
   },
   statusBox: {
-    backgroundColor: '#8a241c',
+    backgroundColor: "#8a241c",
     padding: 30,
     borderRadius: 15,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 30,
   },
   statusText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 22,
-    fontFamily: 'NewRocker-Regular',
+    fontFamily: "NewRocker-Regular",
+  },
+  subtitulo: {
+    fontSize: 18,
+    color: "#fff",
+    fontFamily: "NewRocker-Regular",
+    marginBottom: 8,
+  },
+  listaLojas: {
+    marginBottom: 20,
+  },
+  lojaItem: {
+    fontSize: 16,
+    color: "#fff",
+    fontFamily: "NewRocker-Regular",
+    paddingLeft: 10,
+    marginBottom: 5,
   },
   button: {
-    backgroundColor: '#306030',
+    backgroundColor: "#306030",
     padding: 15,
     borderRadius: 10,
-    alignSelf: 'center',
-    width: '70%',
+    alignSelf: "center",
+    width: "70%",
   },
   buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontFamily: 'NewRocker-Regular',
+    color: "#fff",
+    textAlign: "center",
+    fontFamily: "NewRocker-Regular",
     fontSize: 16,
   },
 });
-

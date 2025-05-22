@@ -1,6 +1,15 @@
 // screens/carrinho.js
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert, ImageBackground } from 'react-native';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  Alert,
+  Platform,
+} from "react-native";
 
 export default function Carrinho({ route, navigation }) {
   const [itensCarrinho, setItensCarrinho] = useState([]);
@@ -14,7 +23,7 @@ export default function Carrinho({ route, navigation }) {
 
   const agruparItens = (itens) => {
     const mapa = {};
-    itens.forEach(item => {
+    itens.forEach((item) => {
       if (mapa[item.id]) {
         mapa[item.id].quantidade += 1;
       } else {
@@ -25,52 +34,64 @@ export default function Carrinho({ route, navigation }) {
   };
 
   const alterarQuantidade = (id, delta) => {
-    const atualizados = itensCarrinho.map(item => {
-      if (item.id === id) {
-        const novaQtd = item.quantidade + delta;
-        if (novaQtd <= 0) {
-          return null; // Remover
+    const atualizados = itensCarrinho
+      .map((item) => {
+        if (item.id === id) {
+          const novaQtd = item.quantidade + delta;
+          if (novaQtd <= 0) {
+            return null; // Remover
+          }
+          return { ...item, quantidade: novaQtd };
         }
-        return { ...item, quantidade: novaQtd };
-      }
-      return item;
-    }).filter(Boolean);
+        return item;
+      })
+      .filter(Boolean);
     setItensCarrinho(atualizados);
   };
 
   const calcularTotal = () => {
-    return itensCarrinho.reduce((soma, item) => soma + item.preco * item.quantidade, 0).toFixed(2);
+    return itensCarrinho
+      .reduce((soma, item) => soma + item.preco * item.quantidade, 0)
+      .toFixed(2);
   };
 
   const finalizarCompra = () => {
-  if (itensCarrinho.length === 0) {
-    Alert.alert("Carrinho vazio", "Adicione itens antes de finalizar.");
-    return;
-  }
+    if (itensCarrinho.length === 0) {
+      Alert.alert("Carrinho vazio", "Adicione itens antes de finalizar.");
+      return;
+    }
 
-  const carrinho = itensCarrinho.map(item => ({
-    nome: item.nome,
-    preco: item.preco,
-    quantidade: item.quantidade,
-    comercioNome: route.params.comercioNome
-  }));
+    const carrinho = itensCarrinho.map((item) => ({
+      nome: item.nome,
+      preco: item.preco,
+      quantidade: item.quantidade,
+      comercioNome: route.params.comercioNome,
+    }));
 
-  navigation.navigate("pagamento", {
-    total: parseFloat(calcularTotal()),
-    carrinho: carrinho,
-    comercioNome: route.params.comercioNome
-  });
-};
-
+    navigation.navigate("pagamento", {
+      total: parseFloat(calcularTotal()),
+      carrinho: carrinho,
+      comercioNome: route.params.comercioNome,
+    });
+  };
 
   return (
-    <ImageBackground source={require('../assets/background3.jpg')} style={styles.background}>
-    <Text style={styles.titulo}>Seu Carrinho</Text>
-      <View style={styles.container}>
-        
+    <View style={styles.fundo}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backbutton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.botaoTexto}>{"<"}</Text>
+        </TouchableOpacity>
+        <Text style={styles.titulo}>🛒 Seu Carrinho</Text>
+      </View>
 
+      <View style={styles.container}>
         {itensCarrinho.length === 0 ? (
-          <Text style={styles.vazio}>Seu carrinho está vazio 😞</Text>
+          <View style={styles.vazioContainer}>
+            <Text style={styles.vazio}>Seu carrinho está vazio 😞</Text>
+          </View>
         ) : (
           <>
             <FlatList
@@ -81,12 +102,21 @@ export default function Carrinho({ route, navigation }) {
                   <Image source={item.imagem} style={styles.imagem} />
                   <View style={styles.info}>
                     <Text style={styles.nome}>{item.nome}</Text>
-                    <Text style={styles.preco}>R$ {item.preco.toFixed(2)} x {item.quantidade}</Text>
+                    <Text style={styles.preco}>
+                      R$ {item.preco.toFixed(2)} x {item.quantidade}
+                    </Text>
                     <View style={styles.qtdContainer}>
-                      <TouchableOpacity onPress={() => alterarQuantidade(item.id, -1)} style={styles.qtdBotao}>
+                      <TouchableOpacity
+                        onPress={() => alterarQuantidade(item.id, -1)}
+                        style={styles.qtdBotao}
+                      >
                         <Text style={styles.qtdTexto}>-</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => alterarQuantidade(item.id, 1)} style={styles.qtdBotao}>
+                      <Text style={styles.quantidade}>{item.quantidade}</Text>
+                      <TouchableOpacity
+                        onPress={() => alterarQuantidade(item.id, 1)}
+                        style={styles.qtdBotao}
+                      >
                         <Text style={styles.qtdTexto}>+</Text>
                       </TouchableOpacity>
                     </View>
@@ -95,69 +125,90 @@ export default function Carrinho({ route, navigation }) {
               )}
             />
             <Text style={styles.total}>Total: R$ {calcularTotal()}</Text>
-            <TouchableOpacity style={styles.finalizar} onPress={finalizarCompra}>
+            <TouchableOpacity
+              style={styles.finalizar}
+              onPress={finalizarCompra}
+            >
               <Text style={styles.finalizarTexto}>Finalizar Pedido</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.continuar} onPress={() => navigation.goBack()}>
+            <TouchableOpacity
+              style={styles.continuar}
+              onPress={() => navigation.goBack()}
+            >
               <Text style={styles.continuarTexto}>Continuar comprando</Text>
             </TouchableOpacity>
-            
-            
           </>
         )}
       </View>
-      <TouchableOpacity style={styles
-            .backbutton} onPress={() => navigation.goBack()}>
-              <Text style={styles.botaoTexto}>{"<"}</Text>
-            </TouchableOpacity>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backbutton: {
-    position: 'absolute',
-    top: 20, // Distância do topo da tela
-    left: 20, // Distância do lado esquerdo
-    backgroundColor: '#8a241c', // Vermelho vinho
-    borderWidth: 3,
-    borderColor: '#8a241c',
-    borderRadius: 30, // Bordas arredondadas
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    shadowColor: '#3c1f1e', // Sombra escura para profundidade
-    shadowOffset: { width: 8, height: 8 },
-    shadowOpacity: 0.7,
-    shadowRadius: 4,
-    elevation: 5, // Sombra no Android
-  },
-  background: {
+  fundo: {
     flex: 1,
+    backgroundColor: "#F5F7FA",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
-  container: {
-    padding: 20,
-    flex: 1,
-    marginTop: 50,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1A2233",
+    padding: 15,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   titulo: {
-    fontSize: 28,
-    textAlign: 'center',
-    marginBottom: 10,
-    fontFamily: 'NewRocker-Regular',
-    color: '#8a241c',
-    marginTop: 30,
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#FFF",
+    textAlign: "center",
+    flex: 1,
+  },
+  backbutton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#4A6A5A",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 40,
+    height: 40,
+  },
+  botaoTexto: {
+    color: "#FFF",
+    fontSize: 20,
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  vazioContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  vazio: {
+    fontSize: 18,
+    color: "#6A0DAD",
+    fontWeight: "600",
   },
   item: {
-    backgroundColor: 'white',
-    marginBottom: 15,
-    borderRadius: 12,
-    flexDirection: 'row',
-    padding: 10,
-    elevation: 5, // Sombra no Android
-    shadowColor: '#000000', // Cor da sombra
-    shadowOffset: { width: 8, height: 8 }, // Sombra posicionada embaixo e à direita
-    shadowOpacity: 0.7, // Intensidade da sombra
-    shadowRadius: 4, // Difusão da sombra
+    flexDirection: "row",
+    backgroundColor: "#FFF",
+    padding: 12,
+    marginBottom: 10,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   imagem: {
     width: 60,
@@ -165,74 +216,67 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   info: {
-    marginLeft: 12,
+    marginLeft: 10,
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   nome: {
-    fontSize: 16,
-    fontFamily: 'NewRocker-Regular',
-    color: '#333',
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1A2233",
   },
   preco: {
-    color: '#666',
     fontSize: 14,
+    color: "#666",
   },
   qtdContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 6,
   },
   qtdBotao: {
-    backgroundColor: '#8a241c',
+    backgroundColor: "#6A0DAD",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 5,
-    paddingHorizontal: 10,
-    marginRight: 8,
   },
   qtdTexto: {
-    color: '#fff',
+    color: "#FFF",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+  },
+  quantidade: {
+    marginHorizontal: 10,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1A2233",
   },
   total: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 10,
-    textAlign: 'center',
-    color: '#3c1f1e',
-    fontFamily: 'NewRocker-Regular',
+    fontWeight: "bold",
+    color: "#1A2233",
+    textAlign: "center",
+    marginVertical: 15,
   },
   finalizar: {
-    backgroundColor: '#306030',
+    backgroundColor: "#6A0DAD",
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
   },
   finalizarTexto: {
-    color: '#fff',
-    textAlign: 'center',
-    fontFamily: 'NewRocker-Regular',
+    color: "#FFF",
+    textAlign: "center",
+    fontWeight: "bold",
   },
   continuar: {
-    backgroundColor: '#8a241c',
+    backgroundColor: "#4A6A5A",
     padding: 10,
     borderRadius: 8,
   },
   continuarTexto: {
-    color: '#fff',
-    textAlign: 'center',
-    fontFamily: 'NewRocker-Regular',
-  },
-  vazio: {
-    color: '#fff',
-    textAlign: 'center',
-    fontSize: 16,
-    marginTop: 20,
-    fontFamily: 'NewRocker-Regular',
-  },
-  botaoTexto: {
-    color: '#fff',
-    fontFamily: 'NewRocker-Regular',
-    textAlign: 'center',
+    color: "#FFF",
+    textAlign: "center",
+    fontWeight: "bold",
   },
 });
-

@@ -1,69 +1,95 @@
-// screens/pagamento.js
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, TextInput, ImageBackground } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { salvarPedido } from '../firebaseService';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  TextInput,
+  ImageBackground,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { salvarPedido } from "../firebaseService";
 
 export default function Pagamento({ navigation, route }) {
   const [metodo, setMetodo] = useState(null);
-  const [dados, setDados] = useState('');
+  const [dados, setDados] = useState("");
   const [pedidoConfirmado, setPedidoConfirmado] = useState(false);
-  const numeroPedido = Math.floor(Math.random() * 1000000); // Número aleatório
-  const total = route.params?.total || '0.00';
+  const numeroPedido = Math.floor(Math.random() * 1000000);
+  const total = route.params?.total || "0.00";
 
   const finalizarPagamento = async () => {
-  if (!metodo || dados.trim() === '') {
-    Alert.alert('Erro', 'Por favor, selecione um método de pagamento e preencha os dados.');
-    return;
-  }
+    if (!metodo || dados.trim() === "") {
+      Alert.alert("Erro", "Selecione um método e insira os dados.");
+      return;
+    }
 
-  try {
-    const token = await AsyncStorage.getItem('userToken');
-    const uid = await AsyncStorage.getItem('userUid');
-    if (!token || !uid) throw new Error('Usuário não autenticado');
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      const uid = await AsyncStorage.getItem("userUid");
+      if (!token || !uid) throw new Error("Usuário não autenticado");
 
-    const carrinho = route.params?.carrinho || [];
-    const totalNum = parseFloat(total);
+      const pedidos = route.params?.pedidos || {};
 
-    await salvarPedido(token, uid, carrinho, totalNum, route.params.comercioNome);
+      const pedidosConfirmados = [];
 
-    setPedidoConfirmado(true);
-    setTimeout(() => {
-      navigation.replace('statuspedido', { numeroPedido });
-    }, 2000);
-  } catch (error) {
-    Alert.alert('Erro ao processar o pagamento', error.message);
-  }
-};
+      for (const comercioId in pedidos) {
+        const pedido = pedidos[comercioId];
+        await salvarPedido(
+          token,
+          uid,
+          pedido.itens,
+          pedido.total,
+          pedido.comercioNome
+        );
+        pedidosConfirmados.push(pedido.comercioNome);
+      }
+
+      await AsyncStorage.removeItem("carrinho_global");
+
+      setPedidoConfirmado(true);
+      setTimeout(() => {
+        navigation.replace("statuspedido", {
+          numeroPedido,
+          lojas: pedidosConfirmados,
+        });
+      }, 2000);
+    } catch (error) {
+      Alert.alert("Erro ao processar pagamento", error.message);
+    }
+  };
 
   return (
-    <ImageBackground source={require('../assets/background3.jpg')} style={styles.background}>
+    <View style={styles.fundo}>
       <View style={styles.container}>
-        <Text style={styles.title}>Pagamento</Text>
+        <Text style={styles.title}>💰 Pagamento</Text>
 
-        <Text style={styles.total}>Total do Pedido: R$ {total}</Text>
+        <Text style={styles.total}>Total: R$ {total}</Text>
 
-        <Text style={styles.label}>Escolha o método de pagamento:</Text>
+        <Text style={styles.label}>Selecione um método:</Text>
+        {["cartaoCredito", "cartaoDebito", "pix"].map((metodoItem) => (
+          <TouchableOpacity
+            key={metodoItem}
+            style={[
+              styles.option,
+              metodo === metodoItem && styles.optionSelecionado,
+            ]}
+            onPress={() => setMetodo(metodoItem)}
+          >
+            <Text style={styles.optionText}>
+              {metodoItem === "pix"
+                ? "Pix"
+                : `Cartão de ${
+                    metodoItem === "cartaoCredito" ? "Crédito" : "Débito"
+                  }`}
+            </Text>
+          </TouchableOpacity>
+        ))}
+
         <TouchableOpacity
-          style={[styles.option, metodo === 'cartaoCredito' && styles.optionSelecionado]}
-          onPress={() => setMetodo('cartaoCredito')}
+          style={styles.backbutton}
+          onPress={() => navigation.goBack()}
         >
-          <Text style={styles.optionText}>Cartão de Crédito</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.option, metodo === 'cartaoDebito' && styles.optionSelecionado]}
-          onPress={() => setMetodo('cartaoDebito')}
-        >
-          <Text style={styles.optionText}>Cartão de Débito</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.option, metodo === 'pix' && styles.optionSelecionado]}
-          onPress={() => setMetodo('pix')}
-        >
-          <Text style={styles.optionText}>Pix</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles
-        .backbutton} onPress={() => navigation.goBack()}>
           <Text style={styles.buttonText}>{"<"}</Text>
         </TouchableOpacity>
 
@@ -71,12 +97,17 @@ export default function Pagamento({ navigation, route }) {
           <>
             <TextInput
               style={styles.input}
-              placeholder={`Digite os dados do ${metodo === 'pix' ? 'Pix' : 'Cartão'}`}
+              placeholder={`Insira os dados do ${
+                metodo === "pix" ? "Pix" : "Cartão"
+              }`}
               placeholderTextColor="#999"
               value={dados}
               onChangeText={setDados}
             />
-            <TouchableOpacity style={styles.button} onPress={finalizarPagamento}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={finalizarPagamento}
+            >
               <Text style={styles.buttonText}>Finalizar Pagamento</Text>
             </TouchableOpacity>
           </>
@@ -84,101 +115,99 @@ export default function Pagamento({ navigation, route }) {
 
         {pedidoConfirmado && (
           <Text style={styles.confirmationText}>
-            Pagamento confirmado! Redirecionando para o status do pedido...
+            ✅ Pagamento confirmado! Redirecionando...
           </Text>
         )}
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backbutton: {
-    position: 'absolute',
-    top: 20, // Distância do topo da tela
-    left: 20, // Distância do lado esquerdo
-    backgroundColor: '#8a241c', // Vermelho vinho
-    borderWidth: 3,
-    borderColor: '#8a241c',
-    borderRadius: 30, // Bordas arredondadas
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    shadowColor: '#3c1f1e', // Sombra escura para profundidade
-    shadowOffset: { width: 8, height: 8 },
-    shadowOpacity: 0.7,
-    shadowRadius: 4,
-    elevation: 5, // Sombra no Android
-  },
-  background: {
+  fundo: {
     flex: 1,
-    resizeMode: 'cover',
+    backgroundColor: "#F5F7FA",
+    padding: 20,
+    justifyContent: "center",
   },
   container: {
-    flex: 1,
-    justifyContent: 'center',
+    backgroundColor: "#FFF",
     padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 12,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   title: {
-    fontSize: 30,
-    marginBottom: 10,
-    textAlign: 'center',
-    color: '#fff',
-    fontFamily: 'NewRocker-Regular',
+    fontSize: 26,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#6A0DAD",
+    marginBottom: 15,
   },
   total: {
     fontSize: 20,
-    textAlign: 'center',
+    textAlign: "center",
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 20,
-    color: '#fff',
-    fontFamily: 'NewRocker-Regular',
   },
   label: {
     fontSize: 18,
     marginBottom: 10,
-    color: '#fff',
-    fontFamily: 'NewRocker-Regular',
+    color: "#1A2233",
   },
   option: {
-    backgroundColor: '#8a241c',
+    backgroundColor: "#6A0DAD",
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
   },
   optionSelecionado: {
-    borderColor: '#fff',
+    borderColor: "#FFF",
     borderWidth: 2,
   },
   optionText: {
-    color: '#fff',
-    fontFamily: 'NewRocker-Regular',
-    textAlign: 'center',
+    color: "#FFF",
+    fontWeight: "bold",
+    textAlign: "center",
   },
   input: {
-    backgroundColor: '#fff',
-    padding: 10,
+    backgroundColor: "#FFF",
+    padding: 12,
     marginTop: 15,
     borderRadius: 8,
-    fontFamily: 'NewRocker-Regular',
-    color: '#000',
+    borderColor: "#6A0DAD",
+    borderWidth: 2,
+    fontSize: 16,
+    color: "#333",
   },
   button: {
-    backgroundColor: '#306030',
-    marginTop: 15,
+    backgroundColor: "#4A6A5A",
     padding: 15,
     borderRadius: 10,
+    marginTop: 15,
   },
   buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontFamily: 'NewRocker-Regular',
+    color: "#FFF",
+    fontWeight: "bold",
+    textAlign: "center",
   },
   confirmationText: {
-    color: '#00e676',
+    color: "#2c682c",
     marginTop: 20,
     fontSize: 16,
-    textAlign: 'center',
-    fontFamily: 'NewRocker-Regular',
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  backbutton: {
+    position: "absolute",
+    top: -50,
+    left: -10,
+    backgroundColor: "#4A6A5A",
+    padding: 10,
+    borderRadius: 20,
   },
 });
-
