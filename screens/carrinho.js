@@ -1,4 +1,3 @@
-// screens/carrinho.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -39,7 +38,7 @@ export default function Carrinho({ route, navigation }) {
         if (item.id === id) {
           const novaQtd = item.quantidade + delta;
           if (novaQtd <= 0) {
-            return null; // Remover
+            return null;
           }
           return { ...item, quantidade: novaQtd };
         }
@@ -65,6 +64,7 @@ export default function Carrinho({ route, navigation }) {
       nome: item.nome,
       preco: item.preco,
       quantidade: item.quantidade,
+      foto: item.foto, // Incluindo foto no carrinho
       comercioNome: route.params.comercioNome,
     }));
 
@@ -99,7 +99,13 @@ export default function Carrinho({ route, navigation }) {
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <View style={styles.item}>
-                  <Image source={item.imagem} style={styles.imagem} />
+                  {item.foto ? (
+                    <Image source={{ uri: item.foto }} style={styles.imagem} />
+                  ) : (
+                    <View style={[styles.imagem, styles.imagePlaceholder]}>
+                      <Text style={styles.imagePlaceholderText}>Sem foto</Text>
+                    </View>
+                  )}
                   <View style={styles.info}>
                     <Text style={styles.nome}>{item.nome}</Text>
                     <Text style={styles.preco}>
@@ -214,6 +220,17 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 10,
+    resizeMode: "cover",
+  },
+  imagePlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ccc",
+  },
+  imagePlaceholderText: {
+    color: "#FFF",
+    fontSize: 12,
+    textAlign: "center",
   },
   info: {
     marginLeft: 10,
@@ -250,33 +267,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#1A2233",
-  },
-  total: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1A2233",
-    textAlign: "center",
-    marginVertical: 15,
-  },
-  finalizar: {
-    backgroundColor: "#6A0DAD",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  finalizarTexto: {
-    color: "#FFF",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  continuar: {
-    backgroundColor: "#4A6A5A",
-    padding: 10,
-    borderRadius: 8,
-  },
-  continuarTexto: {
-    color: "#FFF",
-    textAlign: "center",
-    fontWeight: "bold",
   },
 });
