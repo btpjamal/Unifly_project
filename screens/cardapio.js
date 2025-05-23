@@ -6,18 +6,22 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  TextInput,
   Alert,
   Image,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function CardapioCliente({ navigation, route }) {
   const { comercioId } = route.params;
   const [nomeEstabelecimento, setNomeEstabelecimento] = useState("");
   const [produtos, setProdutos] = useState([]);
   const [carrinho, setCarrinho] = useState([]);
+  const [filtroTexto, setFiltroTexto] = useState("");
+  const [produtosFiltrados, setProdutosFiltrados] = useState([]);
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -35,6 +39,7 @@ export default function CardapioCliente({ navigation, route }) {
         ]);
 
         setProdutos(produtosFirebase);
+        setProdutosFiltrados(produtosFirebase); // inicializa a lista filtrada com todos os produtos
         if (carrinhoLocal) setCarrinho(JSON.parse(carrinhoLocal));
       } catch (error) {
         Alert.alert("Erro", "Não foi possível carregar o cardápio");
@@ -44,6 +49,19 @@ export default function CardapioCliente({ navigation, route }) {
 
     carregarDados();
   }, [comercioId]);
+
+useEffect(() => {
+  if (filtroTexto.trim() === "") {
+    setProdutosFiltrados(produtos);
+  } else {
+    const filtrados = produtos.filter((item) =>
+      item.nome.toLowerCase().includes(filtroTexto.toLowerCase()) ||
+      (item.descricao && item.descricao.toLowerCase().includes(filtroTexto.toLowerCase()))
+    );
+    setProdutosFiltrados(filtrados);
+  }
+}, [filtroTexto, produtos]);
+
 
   useEffect(() => {
     const salvarCarrinho = async () => {
@@ -104,9 +122,29 @@ export default function CardapioCliente({ navigation, route }) {
           <Text style={styles.botaoTexto}>👤 Perfil</Text>
         </TouchableOpacity>
       </View>
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#4A6A5A"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar produtos..."
+          placeholderTextColor="#888"
+          value={filtroTexto}
+          onChangeText={setFiltroTexto}
+        />
+        {filtroTexto.length > 0 && (
+          <TouchableOpacity onPress={() => setFiltroTexto("")}>
+            <Ionicons name="close-circle" size={20} color="#6A0DAD" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       <FlatList
-        data={produtos}
+        data={produtosFiltrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.lista}
         renderItem={({ item }) => (
@@ -154,6 +192,11 @@ const styles = StyleSheet.create({
     width: "100%",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   backbutton: {
     backgroundColor: "#4A6A5A",
@@ -163,6 +206,11 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   tituloContainer: {
     flex: 1,
@@ -178,10 +226,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#6A0DAD",
     padding: 10,
     borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   botaoGoback: {
     color: "#FFF",
     fontSize: 20,
+
   },
   background: {
     flex: 1,
@@ -200,6 +254,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   infoProduto: {
     flex: 1,
@@ -226,6 +285,11 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   botaoCarrinhoFlutuante: {
     position: "absolute",
@@ -236,6 +300,11 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   listaVazia: {
     textAlign: "center",
@@ -246,7 +315,52 @@ const styles = StyleSheet.create({
   productImage: {
     width: 100,
     height: 100,
+    marginRight: 10,
     borderRadius: 8,
     resizeMode: "cover",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  botaoTexto: {
+    color: '#fff',
+    fontSize: 16,
+
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    margin: 15,
+    padding: 15,
+    borderRadius: 10,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1A2233",
+  },
+    emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#6A0DAD",
+    marginTop: 10,
+    textAlign: "center",
   },
 });

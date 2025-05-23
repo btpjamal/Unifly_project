@@ -25,39 +25,23 @@ export default function Pagamento({ navigation, route }) {
     }
 
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const uid = await AsyncStorage.getItem("userUid");
-      if (!token || !uid) throw new Error("Usuário não autenticado");
+      const token = await AsyncStorage.getItem('userToken');
+    const uid = await AsyncStorage.getItem('userUid');
+    if (!token || !uid) throw new Error('Usuário não autenticado');
 
-      const pedidos = route.params?.pedidos || {};
+    const carrinho = route.params?.carrinho || [];
+    const totalNum = parseFloat(total);
 
-      const pedidosConfirmados = [];
+    await salvarPedido(token, uid, carrinho, totalNum, route.params.comercioNome);
 
-      for (const comercioId in pedidos) {
-        const pedido = pedidos[comercioId];
-        await salvarPedido(
-          token,
-          uid,
-          pedido.itens,
-          pedido.total,
-          pedido.comercioNome
-        );
-        pedidosConfirmados.push(pedido.comercioNome);
-      }
-
-      await AsyncStorage.removeItem("carrinho_global");
-
-      setPedidoConfirmado(true);
-      setTimeout(() => {
-        navigation.replace("statuspedido", {
-          numeroPedido,
-          lojas: pedidosConfirmados,
-        });
-      }, 2000);
-    } catch (error) {
-      Alert.alert("Erro ao processar pagamento", error.message);
-    }
-  };
+    setPedidoConfirmado(true);
+    setTimeout(() => {
+      navigation.replace('statuspedido', { numeroPedido });
+    }, 2000);
+  } catch (error) {
+    Alert.alert('Erro ao processar o pagamento', error.message);
+  }
+};
 
   return (
     <View style={styles.fundo}>
@@ -164,6 +148,11 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   optionSelecionado: {
     borderColor: "#FFF",

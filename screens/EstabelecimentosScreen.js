@@ -183,6 +183,11 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   searchIcon: {
     marginRight: 10,
@@ -195,6 +200,7 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 15,
     paddingBottom: 20,
+    
   },
   card: {
     backgroundColor: "#FFF",
@@ -202,6 +208,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 10,
     elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   cardContent: {
     flexDirection: "row",
