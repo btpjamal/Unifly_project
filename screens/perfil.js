@@ -18,6 +18,7 @@ import { buscarPedidos, observarPedidosUsuario, traduzirStatus } from '../fireba
 import Constants from 'expo-constants';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { Ionicons } from "@expo/vector-icons";
 
 export default function PerfilScreen({ navigation }) {
   const [nome, setNome] = useState('');
@@ -25,7 +26,9 @@ export default function PerfilScreen({ navigation }) {
   const [endereco, setEndereco] = useState('');
   const [foto, setFoto] = useState(null);
   const [editando, setEditando] = useState(false);
+  const [filtroTexto, setFiltroTexto] = useState("");
   const [historicoPedidos, setHistoricoPedidos] = useState([]);
+  const [pedidoFiltrados, setPedidosFiltrados] = useState([]);
   const traduzirStatus = (status) => {
     const traducoes = {
       pendente: "🕒 Pedido Recebido",
@@ -74,6 +77,7 @@ useEffect(() => {
     carregarDadosUsuario();
     unsubscribePedidos = observarPedidosUsuario(usuario.uid, (pedidos) => {
       setHistoricoPedidos(pedidos);
+      setPedidosFiltrados(pedidos);
     });
   } else {
     navigation.navigate('login');
@@ -83,6 +87,28 @@ useEffect(() => {
     if (unsubscribePedidos) unsubscribePedidos();
   };
 }, [navigation]);
+
+useEffect(() => {
+  const filtrarPedidos = () => {
+    const texto = filtroTexto.toLowerCase();
+    
+    const filtrados = historicoPedidos.filter(pedido => {
+      return (
+        pedido.comercioNome?.toLowerCase().includes(texto) ||
+        pedido.status.toLowerCase().includes(texto) ||
+        pedido.id.toLowerCase().includes(texto) ||
+        traduzirStatus(pedido.status).toLowerCase().includes(texto) ||
+        pedido.itens?.some(item => 
+  item.nome?.toLowerCase().includes(texto)
+) || false
+      );
+    });
+
+    setPedidosFiltrados(filtrados);
+  };
+
+  filtrarPedidos();
+}, [filtroTexto, historicoPedidos]); // Alterado para historicoPedidos
 
   const escolherFoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -227,12 +253,32 @@ return (
           {editando ? "Salvar" : "Editar"}
         </Text>
       </TouchableOpacity>
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#4A6A5A"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar pedido..."
+          placeholderTextColor="#888"
+          value={filtroTexto}
+          onChangeText={setFiltroTexto}
+        />
+        {filtroTexto.length > 0 && (
+          <TouchableOpacity onPress={() => setFiltroTexto("")}>
+            <Ionicons name="close-circle" size={20} color="#6A0DAD" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       <Text style={styles.subtitulo}>Histórico de Pedidos</Text>
-      {historicoPedidos.length === 0 ? (
+      {pedidoFiltrados.length === 0 ? (
         <Text style={styles.pedidoTexto}>Nenhum pedido encontrado.</Text>
       ) : (
-        historicoPedidos.map((pedido, index) => (
+        pedidoFiltrados.map((pedido, index) => (
           <View key={index} style={styles.pedido}>
             <Text style={styles.pedidoTexto}>
               Status: {traduzirStatus(pedido.status)} {/* Adicione esta linha */}
@@ -364,5 +410,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
+  searchContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#FFF',
+  borderRadius: 10,
+  padding: 12,
+  margin: 15,
+  elevation: 3,
+},
+searchInput: {
+  flex: 1,
+  marginLeft: 10,
+  color: '#1A2233',
+  fontSize: 16,
+},
 });
 

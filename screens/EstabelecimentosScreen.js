@@ -108,6 +108,16 @@ export default function EstabelecimentosScreen({ navigation }) {
                 color="#6A0DAD"
                 style={styles.cardIcon}
               />
+              {item.fotoPerfil ? (
+          <Image
+            source={{ uri: item.fotoPerfil }}
+            style={styles.profileImage}
+          />
+        ) : (
+          <View style={styles.profileFallback}>
+            <Ionicons name="person" size={20} color="#FFF" />
+          </View>
+        )}
               <Text style={styles.nome}>{item.nome}</Text>
               <Ionicons name="chevron-forward" size={20} color="#4A6A5A" />
             </View>
@@ -238,5 +248,31 @@ const styles = StyleSheet.create({
     color: "#6A0DAD",
     marginTop: 10,
     textAlign: "center",
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#DDD',
+  },
+  profileFallback: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#6A0DAD',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nome: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1A2233',
+    fontWeight: '500',
   },
 });

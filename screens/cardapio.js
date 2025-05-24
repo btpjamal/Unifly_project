@@ -85,20 +85,40 @@ export default function CardapioCliente({ navigation, route }) {
     salvarCarrinho();
   }, [carrinho, comercioId]);
 
-  const adicionarAoCarrinho = (produto) => {
-    setCarrinho((prev) => {
-      const itemExistente = prev.find((item) => item.id === produto.id);
+const atualizarCarrinho = (produto, action = 'increment') => {
+  setCarrinho((prev) => {
+    const itemExistente = prev.find((item) => item.id === produto.id);
+    
+    // Incrementar
+    if (action === 'increment') {
       if (itemExistente) {
         return prev.map((item) =>
-          item.id === produto.id
-            ? { ...item, quantidade: item.quantidade + 1 }
+          item.id === produto.id 
+            ? { ...item, quantidade: item.quantidade + 1 } 
             : item
         );
       }
       return [...prev, { ...produto, quantidade: 1 }];
-    });
-  };
-
+    }
+    
+    // Decrementar
+    else if (action === 'decrement') {
+      if (!itemExistente) return prev; // Item não existe, retorna sem alterar
+      
+      if (itemExistente.quantidade === 1) {
+        return prev.filter((item) => item.id !== produto.id); // Remove o item
+      } else {
+        return prev.map((item) =>
+          item.id === produto.id 
+            ? { ...item, quantidade: item.quantidade - 1 } 
+            : item
+        );
+      }
+    }
+    
+    return prev; // Fallback para ações desconhecidas
+  });
+};
   const finalizarPagamento = async () => {
   if (!metodo || dados.trim() === "") {
     Alert.alert("Erro", "Selecione um método e insira os dados.");
@@ -173,21 +193,58 @@ export default function CardapioCliente({ navigation, route }) {
             </View>
             <TouchableOpacity
               style={styles.botaoAdicionar}
-              onPress={() => adicionarAoCarrinho(item)}
+              onPress={() => atualizarCarrinho(item, 'increment')}
             >
               <Text style={styles.botaoTexto}>+</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.botaoDecrementar}
+              onPress={() => atualizarCarrinho(item, 'decrement')}
+            >
+              <Text style={styles.botaoTexto}>-</Text>
             </TouchableOpacity>
           </View>
         )}
       />
+      <View style={styles.listaCarrinho}>
+  <Text style={styles.subtituloCarrinho}>Itens no Carrinho:</Text>
+  
+  {carrinho.length === 0 ? (
+    <Text style={styles.textoVazio}>Nenhum item adicionado</Text>
+  ) : (
+    carrinho.map((item) => (
+      <View key={item.id} style={styles.itemCarrinho}>
+        <View style={styles.infoItem}>
+          <Text style={styles.nomeItem}>{item.nome}</Text>
+          <Text style={styles.quantidadeItem}>x{item.quantidade}</Text>
+        </View>
+        <Text style={styles.precoItem}>
+          R$ {(item.preco * item.quantidade).toFixed(2)}
+        </Text>
+      </View>
+    ))
+  )}
+</View>
+
+{/* Botão Flutuante (mantido para abrir o modal de pagamento) */}
+<TouchableOpacity
+  style={styles.botaoCarrinhoFlutuante}
+  onPress={() => setModalVisible(true)}
+>
+  <Text style={styles.botaoTexto}>
+    Finalizar Pedido 🛒({carrinho.reduce((sum, item) => sum + item.quantidade, 0)})
+  </Text>
+</TouchableOpacity>
 
       <TouchableOpacity
         style={styles.botaoCarrinhoFlutuante}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={styles.botaoTexto}>
-          Ver Carrinho 🛒({carrinho.length})
-        </Text>
+       <Text style={styles.botaoTexto}>
+  Ver Carrinho 🛒(
+  {carrinho.reduce((sum, item) => sum + (item.quantidade || 0), 0)}
+  )
+</Text>
       </TouchableOpacity>
 
       {/* Modal de Pagamento */}
@@ -365,9 +422,23 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+    botaoDecrementar: {
+    backgroundColor: "#6A0DAD",
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    marginLeft: 8, // Adicione esta linha
+  },
   botaoCarrinhoFlutuante: {
     position: "absolute",
-    bottom: 20,
+    bottom: 25,
     left: 20,
     right: 20,
     backgroundColor: "#4A6A5A",
@@ -529,5 +600,54 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.3,
     shadowRadius: 4,
-  }
+  },
+  listaCarrinho: {
+  backgroundColor: '#FFF',
+  padding: 15,
+  marginBottom: 70, // Cria espaço para o botão
+  borderTopWidth: 2,
+  borderColor: '#6A0DAD',
+},
+subtituloCarrinho: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: '#1A2233',
+  marginBottom: 10,
+},
+itemCarrinho: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 8,
+  paddingVertical: 5,
+  borderBottomWidth: 1,
+  borderColor: '#EEE',
+},
+infoItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+},
+nomeItem: {
+  fontSize: 14,
+  color: '#333',
+},
+quantidadeItem: {
+  fontSize: 12,
+  color: '#666',
+  backgroundColor: '#F0F0F0',
+  paddingHorizontal: 8,
+  borderRadius: 10,
+},
+precoItem: {
+  fontSize: 14,
+  color: '#2c682c',
+  fontWeight: 'bold',
+},
+textoVazio: {
+  fontStyle: 'italic',
+  color: '#999',
+  textAlign: 'center',
+  marginVertical: 10,
+},
 });

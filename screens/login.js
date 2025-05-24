@@ -52,7 +52,7 @@ export default function Login({ navigation }) {
       if (userData.tipo === 'admin') {
         navigation.reset({
           index: 0,
-          routes: [{ name: 'dashboardProprietario', params: { comercioId: userData.comercioId } }]
+          routes: [{ name: 'cardapioProprietario', params: { comercioId: userData.comercioId } }]
         });
       } else {
         navigation.reset({

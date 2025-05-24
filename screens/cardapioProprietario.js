@@ -167,7 +167,7 @@ export default function CardapioProprietario({ navigation }) {
         </View>
         <TouchableOpacity
           style={styles.botaoPerfil}
-          onPress={() => navigation.navigate("perfil")}
+          onPress={() => navigation.navigate("perfilProprietário")}
         >
           <Text style={styles.botaoTexto}>👤 Perfil</Text>
         </TouchableOpacity>
