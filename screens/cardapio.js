@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { buscarProdutosDoEstabelecimento } from "../firebaseService";
 import {
   View,
   Text,
@@ -9,8 +8,10 @@ import {
   TextInput,
   Alert,
   Image,
+  Modal,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { buscarProdutosDoEstabelecimento, salvarPedido } from "../firebaseService";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,6 +23,17 @@ export default function CardapioCliente({ navigation, route }) {
   const [carrinho, setCarrinho] = useState([]);
   const [filtroTexto, setFiltroTexto] = useState("");
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [metodo, setMetodo] = useState(null);
+  const [dados, setDados] = useState("");
+  const [pedidoConfirmado, setPedidoConfirmado] = useState(false);
+
+  // Função que retorna o total do carrinho
+  const calcularTotal = () => {
+    return carrinho
+      .reduce((sum, item) => sum + item.preco * item.quantidade, 0)
+      .toFixed(2);
+  };
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -39,7 +51,7 @@ export default function CardapioCliente({ navigation, route }) {
         ]);
 
         setProdutos(produtosFirebase);
-        setProdutosFiltrados(produtosFirebase); // inicializa a lista filtrada com todos os produtos
+        setProdutosFiltrados(produtosFirebase);
         if (carrinhoLocal) setCarrinho(JSON.parse(carrinhoLocal));
       } catch (error) {
         Alert.alert("Erro", "Não foi possível carregar o cardápio");
@@ -50,18 +62,18 @@ export default function CardapioCliente({ navigation, route }) {
     carregarDados();
   }, [comercioId]);
 
-useEffect(() => {
-  if (filtroTexto.trim() === "") {
-    setProdutosFiltrados(produtos);
-  } else {
-    const filtrados = produtos.filter((item) =>
-      item.nome.toLowerCase().includes(filtroTexto.toLowerCase()) ||
-      (item.descricao && item.descricao.toLowerCase().includes(filtroTexto.toLowerCase()))
-    );
-    setProdutosFiltrados(filtrados);
-  }
-}, [filtroTexto, produtos]);
-
+  useEffect(() => {
+    if (filtroTexto.trim() === "") {
+      setProdutosFiltrados(produtos);
+    } else {
+      const filtrados = produtos.filter((item) =>
+        item.nome.toLowerCase().includes(filtroTexto.toLowerCase()) ||
+        (item.descricao &&
+          item.descricao.toLowerCase().includes(filtroTexto.toLowerCase()))
+      );
+      setProdutosFiltrados(filtrados);
+    }
+  }, [filtroTexto, produtos]);
 
   useEffect(() => {
     const salvarCarrinho = async () => {
@@ -87,19 +99,34 @@ useEffect(() => {
     });
   };
 
-  const irParaCarrinho = () => {
-    navigation.navigate("carrinho", {
-      itens: carrinho,
-      total: carrinho.reduce(
-        (sum, item) => sum + item.preco * item.quantidade,
-        0
-      ),
-      comercioId,
-      comercioNome: nomeEstabelecimento,
-    });
+  const finalizarPagamento = async () => {
+    if (!metodo || dados.trim() === "") {
+      Alert.alert("Erro", "Selecione um método e insira os dados.");
+      return;
+    }
+
+    try {
+      // Recupera token e uid para autenticação
+      const token = await AsyncStorage.getItem("userToken");
+      const uid = await AsyncStorage.getItem("userUid");
+      if (!token || !uid) throw new Error("Usuário não autenticado");
+
+      // Calcula o total e salva o pedido
+      const totalNum = parseFloat(calcularTotal());
+      await salvarPedido(token, uid, carrinho, totalNum, nomeEstabelecimento);
+
+      setPedidoConfirmado(true);
+      const numeroPedido = Math.floor(Math.random() * 1000000);
+      setTimeout(() => {
+        setModalVisible(false);
+        navigation.replace("statuspedido", { numeroPedido });
+      }, 2000);
+    } catch (error) {
+      Alert.alert("Erro ao processar o pagamento", error.message);
+    }
   };
 
-  return (
+   return (
     <View style={styles.fundo}>
       <View style={styles.header}>
         <TouchableOpacity
@@ -122,26 +149,6 @@ useEffect(() => {
           <Text style={styles.botaoTexto}>👤 Perfil</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.searchContainer}>
-        <Ionicons
-          name="search"
-          size={20}
-          color="#4A6A5A"
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar produtos..."
-          placeholderTextColor="#888"
-          value={filtroTexto}
-          onChangeText={setFiltroTexto}
-        />
-        {filtroTexto.length > 0 && (
-          <TouchableOpacity onPress={() => setFiltroTexto("")}>
-            <Ionicons name="close-circle" size={20} color="#6A0DAD" />
-          </TouchableOpacity>
-        )}
-      </View>
 
       <FlatList
         data={produtosFiltrados}
@@ -163,21 +170,79 @@ useEffect(() => {
             </TouchableOpacity>
           </View>
         )}
-        ListEmptyComponent={
-          <Text style={styles.listaVazia}>
-            Nenhum produto disponível no momento
-          </Text>
-        }
       />
 
       <TouchableOpacity
         style={styles.botaoCarrinhoFlutuante}
-        onPress={irParaCarrinho}
+        onPress={() => setModalVisible(true)}
       >
         <Text style={styles.botaoTexto}>
           Ver Carrinho 🛒({carrinho.length})
         </Text>
       </TouchableOpacity>
+
+      {/* Modal de Pagamento */}
+      <Modal visible={modalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.label}>
+              💰 Escolha uma forma de pagamento:
+            </Text>
+            <Text style={styles.totalModal}>Total: R$ {calcularTotal()}</Text>
+            {["cartaoCredito", "cartaoDebito", "pix"].map((metodoItem) => (
+              <TouchableOpacity
+                key={metodoItem}
+                style={[
+                  styles.option,
+                  metodo === metodoItem && styles.optionSelecionado,
+                ]}
+                onPress={() => setMetodo(metodoItem)}
+              >
+                <Text style={styles.optionText}>
+                  {metodoItem === "pix"
+                    ? "Pix"
+                    : `Cartão de ${
+                        metodoItem === "cartaoCredito" ? "Crédito" : "Débito"
+                      }`}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+            {metodo && (
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder={`Insira os dados do ${
+                    metodo === "pix" ? "Pix" : "Cartão"
+                  }`}
+                  placeholderTextColor="#999"
+                  value={dados}
+                  onChangeText={setDados}
+                />
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={finalizarPagamento}
+                >
+                  <Text style={styles.buttonText}>Finalizar Pagamento</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {pedidoConfirmado && (
+              <Text style={styles.confirmationText}>
+                ✅ Pagamento confirmado! Redirecionando...
+              </Text>
+            )}
+
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              style={styles.botaoFechar}
+            >
+              <Text style={styles.buttonText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -363,4 +428,97 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: "center",
   },
+    modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.2)", // Fundo escurecido e levemente desfocado
+    backdropFilter: "blur(8px)", // Efeito de desfoque
+  },
+  modalContainer: {
+    width: "85%",
+    padding: 25,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1A2233",
+    marginBottom: 10,
+  },
+  input: {
+    backgroundColor: "#FFF",
+    padding: 12,
+    marginTop: 10,
+    borderRadius: 8,
+    borderColor: "#6A0DAD",
+    borderWidth: 2,
+    fontSize: 16,
+    color: "#333",
+    width: "100%",
+  },
+  button: {
+    backgroundColor: "#4A6A5A",
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 15,
+    width: "100%",
+  },
+  buttonText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 16,
+  },
+  fecharModal: {
+    marginTop: 15,
+    backgroundColor: "#6A0DAD",
+    padding: 12,
+    borderRadius: 10,
+    width: "100%",
+  },
+  option: {
+    backgroundColor: "#6A0DAD",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    width: "100%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  optionSelecionado: {
+    borderColor: "#FFF",
+    borderWidth: 2,
+  },
+  optionText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  label: {
+    fontSize: 18,
+    marginBottom: 10,
+    color: "#1A2233",
+  },
+  botaoFechar:{
+    backgroundColor: "#4A6A5A",
+    alignItems: "center",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  }
 });
