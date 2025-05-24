@@ -9,8 +9,10 @@ import {
   StatusBar,
   StyleSheet,
   SafeAreaView,
+  Image,
+  Alert,
 } from "react-native";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -21,19 +23,47 @@ export default function EstabelecimentosScreen({ navigation }) {
     []
   );
 
-  useEffect(() => {
-    const carregarEstabelecimentos = async () => {
-      const querySnapshot = await getDocs(collection(db, "comercios"));
-      const lista = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setEstabelecimentos(lista);
-      setEstabelecimentosFiltrados(lista);
-    };
+useEffect(() => {
+  const carregarEstabelecimentos = async () => {
+    try {
+      // 1. Cria a query para buscar usuários admin
+      const usuariosRef = collection(db, "usuarios");
+      const q = query(
+        usuariosRef,
+        where("tipo", "==", "admin"),  // Filtra por tipo "admin"
+        where("comercioId", "!=", null) // Garante que há comércio vinculado
+      );
 
-    carregarEstabelecimentos();
-  }, []);
+      const querySnapshot = await getDocs(q);
+      const estabelecimentosComFoto = [];
+
+      // 2. Processa cada admin
+      for (const userDoc of querySnapshot.docs) {
+        const userData = userDoc.data();
+        const comercioRef = doc(db, "comercios", userData.comercioId);
+        const comercioDoc = await getDoc(comercioRef);
+
+        if (comercioDoc.exists()) {
+          estabelecimentosComFoto.push({
+            id: comercioDoc.id,
+            nome: comercioDoc.data().nome,
+            fotoPerfil: userData.fotoPerfil || null,
+            adminUID: userDoc.id
+          });
+        }
+      }
+
+      setEstabelecimentos(estabelecimentosComFoto);
+      setEstabelecimentosFiltrados(estabelecimentosComFoto);
+
+    } catch (error) {
+      console.error("Erro ao carregar estabelecimentos:", error);
+      Alert.alert("Erro", "Não foi possível carregar os estabelecimentos");
+    }
+  };
+
+  carregarEstabelecimentos();
+}, []);
 
   useEffect(() => {
     const filtrados = estabelecimentos.filter((item) =>
@@ -223,10 +253,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5,
-  },
-  cardContent: {
-    flexDirection: "row",
-    alignItems: "center",
   },
   cardIcon: {
     marginRight: 15,
