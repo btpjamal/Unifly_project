@@ -1,6 +1,6 @@
 //Autenticação com SDK
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, collection, getDocs, addDoc, serverTimestamp, query, where, orderBy, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, addDoc, serverTimestamp, query, where, orderBy, updateDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 export const cadastrarUsuario = async ({ nome, email, senha, tipo, nomeComercio }) => {
@@ -81,10 +81,9 @@ export const buscarProdutosDoEstabelecimento = async (comercioId) => {
   }
 };
 
-//Salvar Pedido
-export const salvarPedido = async (token, uid, itens, total, comercioNome) => {
+// salvar pedido
+export const salvarPedido = async (token, uid, itens, total, comercioNome, comercioId) => {
   try {
-    if (!comercioNome) throw new Error("Nome do estabelecimento não definido!");
     const pedido = {
       token,
       uid,
@@ -92,10 +91,14 @@ export const salvarPedido = async (token, uid, itens, total, comercioNome) => {
       itens,
       status: 'pendente',
       criadoEm: serverTimestamp(),
-      comercioNome
+      comercioNome,
+      comercioId
     };
 
-    await addDoc(collection(db, 'pedidos'), pedido);
+    // Retorna a referência do documento criado
+    const docRef = await addDoc(collection(db, 'pedidos'), pedido);
+    return docRef;
+
   } catch (error) {
     console.error('Erro ao salvar pedido:', error);
     throw error;
@@ -172,5 +175,68 @@ export const buscarEstabelecimentos = async () => {
   } catch (error) {
     console.error("Erro ao buscar estabelecimentos:", error);
     return [];
+  }
+};
+
+// Adicione estas funções
+export const observarPedido = (pedidoId, callback) => {
+  const pedidoRef = doc(db, 'pedidos', pedidoId);
+  return onSnapshot(pedidoRef, (doc) => {
+    if (doc.exists()) {
+      const data = doc.data();
+      callback({
+        id: doc.id,
+        ...data,
+        criadoEm: data.criadoEm?.toDate() || new Date()
+      });
+    }
+  });
+};
+
+export const observarPedidos = (comercioId, callback) => {
+  const pedidosRef = collection(db, 'pedidos');
+  const q = query(
+    pedidosRef,
+    where('comercioId', '==', comercioId),
+    orderBy('criadoEm', 'desc')
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const pedidos = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      criadoEm: doc.data().criadoEm?.toDate() || new Date()
+    }));
+    callback(pedidos);
+  });
+};
+
+// Adicione esta função no firebaseService.js
+export const observarPedidosUsuario = (uid, callback) => {
+  const pedidosRef = collection(db, 'pedidos');
+  const q = query(
+    pedidosRef,
+    where('uid', '==', uid),
+    orderBy('criadoEm', 'desc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const pedidos = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      criadoEm: doc.data().criadoEm?.toDate() || new Date()
+    }));
+    callback(pedidos);
+  });
+};
+
+// firebaseService.js
+export const atualizarStatusPedido = async (pedidoId, novoStatus) => {
+  try {
+    const pedidoRef = doc(db, 'pedidos', pedidoId);
+    await updateDoc(pedidoRef, { status: novoStatus });
+  } catch (error) {
+    console.error('Erro ao atualizar status:', error);
+    throw error;
   }
 };

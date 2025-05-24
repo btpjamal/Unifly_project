@@ -14,6 +14,7 @@ import Perfil from './screens/perfil';
 import CardapioProprietario from './screens/cardapioProprietario';
 import DashboardProprietario from './screens/dashboardProprietario';
 import EstabelecimentosScreen from './screens/EstabelecimentosScreen';
+import RelatoriosScreen from './screens/relatorios';
 import * as Font from 'expo-font';
 
 const Stack = createNativeStackNavigator();
@@ -49,6 +50,7 @@ export default function App() {
         <Stack.Screen name="perfil" component={Perfil} />
         <Stack.Screen name="cardapioProprietario" component={CardapioProprietario} />
         <Stack.Screen name="EstabelecimentosScreen" component={EstabelecimentosScreen} />
+        <Stack.Screen name="relatorios" component={RelatoriosScreen} />
         <Stack.Screen 
           name="dashboardProprietario" 
           component={DashboardProprietario}

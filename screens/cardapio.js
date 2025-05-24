@@ -100,31 +100,40 @@ export default function CardapioCliente({ navigation, route }) {
   };
 
   const finalizarPagamento = async () => {
-    if (!metodo || dados.trim() === "") {
-      Alert.alert("Erro", "Selecione um método e insira os dados.");
-      return;
-    }
+  if (!metodo || dados.trim() === "") {
+    Alert.alert("Erro", "Selecione um método e insira os dados.");
+    return;
+  }
 
-    try {
-      // Recupera token e uid para autenticação
-      const token = await AsyncStorage.getItem("userToken");
-      const uid = await AsyncStorage.getItem("userUid");
-      if (!token || !uid) throw new Error("Usuário não autenticado");
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    const uid = await AsyncStorage.getItem("userUid");
+    if (!token || !uid) throw new Error("Usuário não autenticado");
 
-      // Calcula o total e salva o pedido
-      const totalNum = parseFloat(calcularTotal());
-      await salvarPedido(token, uid, carrinho, totalNum, nomeEstabelecimento);
+    const totalNum = parseFloat(calcularTotal());
+    
+    // 1. Salva o pedido e obtém a referência do documento
+    const docRef = await salvarPedido(
+      token,
+      uid,
+      carrinho,
+      totalNum,
+      nomeEstabelecimento,
+      comercioId
+    );
 
-      setPedidoConfirmado(true);
-      const numeroPedido = Math.floor(Math.random() * 1000000);
-      setTimeout(() => {
-        setModalVisible(false);
-        navigation.replace("statuspedido", { numeroPedido });
-      }, 2000);
-    } catch (error) {
-      Alert.alert("Erro ao processar o pagamento", error.message);
-    }
-  };
+    setPedidoConfirmado(true);
+    
+    // 2. Navega imediatamente com o ID real
+    setTimeout(() => {
+      setModalVisible(false);
+      navigation.replace("statuspedido", { pedidoId: docRef.id }); // Usa o ID real
+    }, 2000);
+
+  } catch (error) {
+    Alert.alert("Erro ao processar o pagamento", error.message);
+  }
+};
 
    return (
     <View style={styles.fundo}>

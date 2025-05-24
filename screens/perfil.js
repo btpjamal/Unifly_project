@@ -14,7 +14,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuth, signOut } from 'firebase/auth';
-import { buscarPedidos } from '../firebaseService';
+import { buscarPedidos, observarPedidosUsuario, traduzirStatus } from '../firebaseService';
 import Constants from 'expo-constants';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -26,57 +26,63 @@ export default function PerfilScreen({ navigation }) {
   const [foto, setFoto] = useState(null);
   const [editando, setEditando] = useState(false);
   const [historicoPedidos, setHistoricoPedidos] = useState([]);
+  const traduzirStatus = (status) => {
+    const traducoes = {
+      pendente: "🕒 Pedido Recebido",
+      preparo: "👨🍳 Em Preparo",
+      pronto: "✅ Pronto para Retirada",
+      entregue: "🛵 Entregue"
+  };
+  return traducoes[status] || status;
+};
 
-  useEffect(() => {
-    const carregarDados = async () => {
-      const auth = getAuth();
-      const usuario = auth.currentUser;
 
-      console.log('Usuário autenticado:', usuario); // 👈 Adicione este log
+useEffect(() => {
+  const auth = getAuth();
+  const usuario = auth.currentUser;
+  let unsubscribePedidos = null;
 
-      if (!usuario) {
-        console.error('Usuário não autenticado!');
-        navigation.navigate('login');
-        return;
-  
-      }
-      try{
-        const db = getFirestore();
-        const userRef = doc(db, 'usuarios', usuario.uid);
-        const userDoc = await getDoc(userRef);
+  const carregarDadosUsuario = async () => {
+    try {
+      const db = getFirestore();
+      const userRef = doc(db, 'usuarios', usuario.uid);
+      const userDoc = await getDoc(userRef);
 
-       // Dados padrão caso não exista no Firestore
-        const dadosIniciais = {
+      const dadosIniciais = {
         nome: usuario.displayName || 'Nome desconhecido',
         endereco: '',
         fotoPerfil: null
       };
-       if (userDoc.exists()) {
+
+      if (userDoc.exists()) {
         const userData = userDoc.data();
         setNome(userData.nome || dadosIniciais.nome);
-        setEndereco(userDoc.data().endereco || ''); // Carrega do Firestore
+        setEndereco(userData.endereco || '');
         setFoto(userData.fotoPerfil || null);
         setEmail(userData.email || '');
-        console.log('Dados do Firestore:', userData);
-      }else {
-        // Cria documento com dados iniciais
+      } else {
         await updateDoc(userRef, dadosIniciais);
         setNome(dadosIniciais.nome);
       }
-
-        // Carrega pedidos
-      const token = await usuario.getIdToken();
-      const pedidos = await buscarPedidos(token, usuario.uid);
-      setHistoricoPedidos(pedidos);
-
-      }catch (error) {
+    } catch (error) {
       console.error('Erro ao carregar dados:', error);
       Alert.alert('Erro', 'Falha ao carregar o perfil');
     }
   };
 
-  carregarDados();
-}, []);
+  if (usuario) {
+    carregarDadosUsuario();
+    unsubscribePedidos = observarPedidosUsuario(usuario.uid, (pedidos) => {
+      setHistoricoPedidos(pedidos);
+    });
+  } else {
+    navigation.navigate('login');
+  }
+
+  return () => {
+    if (unsubscribePedidos) unsubscribePedidos();
+  };
+}, [navigation]);
 
   const escolherFoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -142,6 +148,7 @@ export default function PerfilScreen({ navigation }) {
     console.error('Erro ao salvar dados:', error);
     Alert.alert('Erro', 'Falha ao salvar os dados. Tente novamente.');
   }
+
 };
 
 
@@ -227,6 +234,9 @@ return (
       ) : (
         historicoPedidos.map((pedido, index) => (
           <View key={index} style={styles.pedido}>
+            <Text style={styles.pedidoTexto}>
+              Status: {traduzirStatus(pedido.status)} {/* Adicione esta linha */}
+            </Text>
             <Text style={styles.pedidoTexto}>
               Estabelecimento:{" "}
               {pedido.comercioNome || "Estabelecimento não identificado"}
