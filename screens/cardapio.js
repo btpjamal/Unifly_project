@@ -179,6 +179,27 @@ const atualizarCarrinho = (produto, action = 'increment') => {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#4A6A5A"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar estabelecimento..."
+          placeholderTextColor="#888"
+          value={filtroTexto}
+          onChangeText={setFiltroTexto}
+        />
+        {filtroTexto.length > 0 && (
+          <TouchableOpacity onPress={() => setFiltroTexto("")}>
+            <Ionicons name="close-circle" size={20} color="#6A0DAD" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <FlatList
         data={produtosFiltrados}
         keyExtractor={(item) => item.id}

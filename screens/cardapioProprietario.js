@@ -6,27 +6,33 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
-  ImageBackground,
   TextInput,
   Modal,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { getAuth } from "firebase/auth";
 import { getDoc, doc } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, storage } from "../firebase";
 import {
   buscarProdutosComercio,
   adicionarProduto,
   atualizarProduto,
   excluirProduto,
 } from "../firebaseService";
+import * as ImagePicker from 'expo-image-picker';
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { v4 as uuidv4 } from 'uuid';
+import { Ionicons } from "@expo/vector-icons";
 
 export default function CardapioProprietario({ navigation }) {
   const [produtos, setProdutos] = useState([]);
   const [comercioId, setComercioId] = useState(null);
   const [nomeEstabelecimento, setNomeEstabelecimento] = useState("");
+  const [filtroTexto, setFiltroTexto] = useState("");
   const [modalVisivel, setModalVisivel] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState(null);
+  const [produtosFiltrados, setProdutosFiltrados] = useState([]);
   const [novoProduto, setNovoProduto] = useState({
     nome: "",
     descricao: "",
@@ -34,103 +40,146 @@ export default function CardapioProprietario({ navigation }) {
     estoque: "",
     foto: null,
   });
+  const [carregando, setCarregando] = useState(false);
 
-  // Recupera o commerceId e o nome do estabelecimento e carrega os produtos
   useEffect(() => {
     const carregarDados = async () => {
       const auth = getAuth();
       const usuario = auth.currentUser;
+      
       if (!usuario) {
-        Alert.alert("Erro", "Usuário não autenticado.");
-        // Se necessário, redirecione para a tela de login
         navigation.navigate("login");
         return;
       }
 
-      const usuarioDoc = await getDoc(doc(db, "usuarios", usuario.uid));
-      const comercio = usuarioDoc.data().comercioId;
-      setComercioId(comercio);
+      try {
+        const usuarioDoc = await getDoc(doc(db, "usuarios", usuario.uid));
+        const comercio = usuarioDoc.data().comercioId;
+        setComercioId(comercio);
 
-      const lista = await buscarProdutosComercio(comercio);
-      setProdutos(lista);
+        const lista = await buscarProdutosComercio(comercio);
+        setProdutos(lista);
+      } catch (error) {
+        Alert.alert("Erro", "Falha ao carregar dados");
+      }
     };
 
     carregarDados();
   }, []);
+  
+  useEffect(() => {
+    if (filtroTexto.trim() === "") {
+      setProdutosFiltrados(produtos);
+    } else {
+      const filtrados = produtos.filter((item) =>
+        item.nome.toLowerCase().includes(filtroTexto.toLowerCase()) ||
+        (item.descricao &&
+        item.descricao.toLowerCase().includes(filtroTexto.toLowerCase()))
+    );
+      setProdutosFiltrados(filtrados);
+    }
+  }, [filtroTexto, produtos]);
 
-  // Abre o modal para criar ou editar um produto
   const abrirModal = (produto = null) => {
     setProdutoEditando(produto);
     setNovoProduto(
-      produto
-        ? { ...produto }
-        : { nome: "", descricao: "", preco: "", estoque: "", foto: null }
+      produto ? { ...produto } : {
+        nome: "",
+        descricao: "",
+        preco: "",
+        estoque: "",
+        foto: null
+      }
     );
     setModalVisivel(true);
   };
 
-  // Função para escolher foto (implemente sua lógica com o expo-image-picker)
   const escolherFotoProduto = async () => {
-    // Exemplo simplificado:
-    // Utilize o ImagePicker para selecionar a foto e atualizar novoProduto.foto
-    // Seu código de seleção de imagem vai aqui...
-  };
-
-  // Salva (cria/atualiza) o produto
-  const salvarProduto = async () => {
     try {
-      const dadosProduto = {
-        nome: novoProduto.nome,
-        descricao: novoProduto.descricao,
-        preco: parseFloat(novoProduto.preco),
-        estoque: parseInt(novoProduto.estoque),
-      };
-
-      let dadosProdutoComFoto = { ...dadosProduto };
-
-      if (produtoEditando) {
-        // Atualiza produto existente
-        if (novoProduto.foto && !novoProduto.foto.startsWith("http")) {
-          // Se houver foto nova, faça o upload (lógica de upload similar à usada no perfil)
-          // e obtenha a URL para atribuir:
-          // dadosProdutoComFoto.foto = urlObtida;
-        } else if (produtoEditando.foto) {
-          dadosProdutoComFoto.foto = produtoEditando.foto;
-        }
-        await atualizarProduto(
-          comercioId,
-          produtoEditando.id,
-          dadosProdutoComFoto
-        );
-        setProdutos((prev) =>
-          prev.map((p) =>
-            p.id === produtoEditando.id
-              ? { ...dadosProdutoComFoto, id: p.id }
-              : p
-          )
-        );
-      } else {
-        // Cria novo produto e obtém o novo ID
-        const novoId = await adicionarProduto(comercioId, dadosProduto);
-        if (novoProduto.foto && !novoProduto.foto.startsWith("http")) {
-          // Faça o upload e depois atualize o documento com a URL da foto
-          // dadosProdutoComFoto.foto = urlObtida;
-          await atualizarProduto(comercioId, novoId, dadosProdutoComFoto);
-        }
-        setProdutos((prev) => [
-          ...prev,
-          { ...dadosProdutoComFoto, id: novoId },
-        ]);
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Precisamos acesso às suas fotos');
+        return;
       }
-      setModalVisivel(false);
+
+      const resultado = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!resultado.canceled) {
+        setNovoProduto(prev => ({
+          ...prev,
+          foto: resultado.assets[0].uri
+        }));
+      }
     } catch (error) {
-      Alert.alert("Erro", error.message);
-      console.error("Erro ao salvar produto:", error);
+      Alert.alert("Erro", "Falha ao selecionar imagem");
     }
   };
 
-  // Confirma exclusão do produto
+  const uploadImagem = async (uri) => {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const nomeArquivo = uuidv4();
+      const storageRef = ref(storage, `produtos/${nomeArquivo}`);
+      
+      await uploadBytes(storageRef, blob);
+      return await getDownloadURL(storageRef);
+    } catch (error) {
+      throw new Error("Falha no upload da imagem");
+    }
+  };
+
+  const salvarProduto = async () => {
+    if (!novoProduto.nome || !novoProduto.preco) {
+      Alert.alert("Atenção", "Preencha pelo menos nome e preço");
+      return;
+    }
+
+    setCarregando(true);
+    try {
+      let fotoUrl = novoProduto.foto;
+
+      // Se é uma nova imagem (não começa com http)
+      if (novoProduto.foto && !novoProduto.foto.startsWith('http')) {
+        fotoUrl = await uploadImagem(novoProduto.foto);
+      }
+
+      const dadosProduto = {
+        ...novoProduto,
+        preco: parseFloat(novoProduto.preco),
+        estoque: parseInt(novoProduto.estoque) || 0,
+        foto: fotoUrl
+      };
+
+      if (produtoEditando) {
+        await atualizarProduto(comercioId, produtoEditando.id, dadosProduto);
+        setProdutos(prev => prev.map(p => 
+          p.id === produtoEditando.id ? { ...dadosProduto, id: p.id } : p
+        ));
+      } else {
+        const novoId = await adicionarProduto(comercioId, dadosProduto);
+        setProdutos(prev => [...prev, { ...dadosProduto, id: novoId }]);
+      }
+
+      setModalVisivel(false);
+    } catch (error) {
+      Alert.alert("Erro", error.message);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
   const confirmarExclusao = (produtoId) => {
+    if (!comercioId) {
+      Alert.alert("Erro", "Comércio não identificado");
+      return;
+    }
+
     Alert.alert(
       "Confirmar Exclusão",
       "Tem certeza que deseja excluir este produto?",
@@ -141,30 +190,33 @@ export default function CardapioProprietario({ navigation }) {
           onPress: async () => {
             try {
               await excluirProduto(comercioId, produtoId);
-              setProdutos((prev) => prev.filter((p) => p.id !== produtoId));
+              setProdutos(prev => prev.filter(p => p.id !== produtoId));
             } catch (error) {
-              Alert.alert("Erro", "Falha ao excluir o produto.");
+              Alert.alert("Erro", "Falha ao excluir o produto");
             }
           },
         },
       ]
     );
   };
-
+  
   return (
-    <View style={styles.fundo}>
+    <View style={styles.background}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backbutton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate("splashscreen")}
+          activeOpacity={0.7}
         >
-          <Text style={styles.botaoGoback}>{"<"}</Text>
+          <Ionicons name="exit-outline" size={24} color="#FFF" />
         </TouchableOpacity>
+        
         <View style={styles.tituloContainer}>
           <Text style={styles.titulo} numberOfLines={1}>
             {nomeEstabelecimento || "Cardápio"}
           </Text>
         </View>
+        
         <TouchableOpacity
           style={styles.botaoPerfil}
           onPress={() => navigation.navigate("perfilProprietário")}
@@ -173,22 +225,46 @@ export default function CardapioProprietario({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#4A6A5A"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar estabelecimento..."
+          placeholderTextColor="#888"
+          value={filtroTexto}
+          onChangeText={setFiltroTexto}
+        />
+          {filtroTexto.length > 0 && (
+        <TouchableOpacity onPress={() => setFiltroTexto("")}>
+          <Ionicons name="close-circle" size={20} color="#6A0DAD" />
+        </TouchableOpacity>
+        )}
+        </View>
+
       <FlatList
-        data={produtos}
+        data={produtosFiltrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.lista}
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
-            {item.foto ? (
+            {item.foto && (
               <Image source={{ uri: item.foto }} style={styles.productImage} />
-            ) : null}
+            )}
+            
             <View style={styles.infoProduto}>
               <Text style={styles.nome}>{item.nome}</Text>
               <Text style={styles.descricao}>{item.descricao}</Text>
               <Text style={styles.preco}>
                 R$ {parseFloat(item.preco).toFixed(2)}
               </Text>
+              <Text style={styles.estoque}>Estoque: {item.estoque}</Text>
             </View>
+            
             <View style={styles.botoesContainer}>
               <TouchableOpacity
                 onPress={() => abrirModal(item)}
@@ -196,6 +272,7 @@ export default function CardapioProprietario({ navigation }) {
               >
                 <Text style={styles.botaoTexto}>Editar</Text>
               </TouchableOpacity>
+              
               <TouchableOpacity
                 onPress={() => confirmarExclusao(item.id)}
                 style={styles.botaoExcluir}
@@ -214,95 +291,114 @@ export default function CardapioProprietario({ navigation }) {
 
       <TouchableOpacity
         style={styles.botaoCarrinhoFlutuante}
-        onPress={() => abrirModal(null)}
+        onPress={() => abrirModal()}
       >
         <Text style={styles.botaoTexto}>Adicionar Produto</Text>
       </TouchableOpacity>
 
-      <Modal visible={modalVisivel} animationType="slide">
-        <View style={styles.modalContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nome"
-            value={novoProduto.nome}
-            onChangeText={(text) =>
-              setNovoProduto((prev) => ({ ...prev, nome: text }))
-            }
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Descrição"
-            value={novoProduto.descricao}
-            onChangeText={(text) =>
-              setNovoProduto((prev) => ({ ...prev, descricao: text }))
-            }
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Preço"
-            keyboardType="numeric"
-            value={novoProduto.preco}
-            onChangeText={(text) =>
-              setNovoProduto((prev) => ({ ...prev, preco: text }))
-            }
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Estoque"
-            keyboardType="numeric"
-            value={novoProduto.estoque}
-            onChangeText={(text) =>
-              setNovoProduto((prev) => ({ ...prev, estoque: text }))
-            }
-          />
-
-          {novoProduto.foto ? (
-            <Image
-              source={{ uri: novoProduto.foto }}
-              style={styles.fotoProdutoModal}
+      <Modal visible={modalVisivel} transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {carregando && <ActivityIndicator size="large" color="#6A0DAD" />}
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Nome do produto"
+              value={novoProduto.nome}
+              onChangeText={(text) => setNovoProduto(prev => ({ ...prev, nome: text }))}
             />
-          ) : null}
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Descrição"
+              multiline
+              value={novoProduto.descricao}
+              onChangeText={(text) => setNovoProduto(prev => ({ ...prev, descricao: text }))}
+            />
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Preço"
+              keyboardType="numeric"
+              value={novoProduto.preco}
+              onChangeText={(text) => setNovoProduto(prev => ({ ...prev, preco: text }))}
+            />
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Estoque"
+              keyboardType="numeric"
+              value={novoProduto.estoque}
+              onChangeText={(text) => setNovoProduto(prev => ({ ...prev, estoque: text }))}
+            />
 
-          <TouchableOpacity
-            onPress={escolherFotoProduto}
-            style={styles.botaoFoto}
-          >
-            <Text style={styles.botaoTexto}>
-              {novoProduto.foto ? "Alterar foto" : "Adicionar foto"}
-            </Text>
-          </TouchableOpacity>
+            {novoProduto.foto && (
+              <Image
+                source={{ uri: novoProduto.foto }}
+                style={styles.fotoProdutoModal}
+              />
+            )}
 
-          <TouchableOpacity onPress={salvarProduto} style={styles.botaoSalvar}>
-            <Text style={styles.botaoTexto}>Salvar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setModalVisivel(false)}
-            style={styles.botaoCancelar}
-          >
-            <Text style={styles.botaoTexto}>Cancelar</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={escolherFotoProduto}
+              style={styles.botaoFoto}
+            >
+              <Text style={styles.botaoTexto}>
+                {novoProduto.foto ? "Alterar Foto" : "Adicionar Foto"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                onPress={salvarProduto}
+                style={styles.botaoSalvar}
+                disabled={carregando}
+              >
+                <Text style={styles.botaoTexto}>
+                  {carregando ? 'Salvando...' : 'Salvar'}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={() => setModalVisivel(false)}
+                style={styles.botaoCancelar}
+                disabled={carregando}
+              >
+                <Text style={styles.botaoTexto}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
     resizeMode: "cover",
+    backgroundColor: "#F0F4F7",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 15,
-    backgroundColor: "rgba(138, 36, 28, 0.9)",
+    backgroundColor: "#1A2233",
     width: "100%",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   backbutton: {
-    backgroundColor: "#3c1f1e",
-    padding: 10,
+    backgroundColor: "#4A6A5A",
+    padding: 8,
     borderRadius: 20,
     width: 40,
     height: 40,
@@ -310,9 +406,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   botaoGoback: {
-    color: "#fff",
+    color: "#FFF",
     fontSize: 20,
-    lineHeight: 24,
   },
   tituloContainer: {
     flex: 1,
@@ -320,50 +415,65 @@ const styles = StyleSheet.create({
   },
   titulo: {
     fontSize: 20,
-    color: "#fff",
-    fontFamily: "NewRocker-Regular",
+    color: "#FFF",
+    fontWeight: "bold",
     textAlign: "center",
     textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   botaoPerfil: {
-    backgroundColor: "#3c1f1e",
+    backgroundColor: "#6A0DAD",
     padding: 10,
     borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   botaoTexto: {
     color: "#fff",
-    fontFamily: "NewRocker-Regular",
     fontSize: 16,
+    fontWeight: "bold",
   },
   lista: {
     paddingHorizontal: 15,
     paddingBottom: 80,
   },
   itemContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: "#FFF",
     borderRadius: 10,
     padding: 15,
     marginBottom: 15,
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   productImage: {
     width: 100,
     height: 100,
-    borderRadius: 8,
     marginRight: 10,
+    borderRadius: 8,
     resizeMode: "cover",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   infoProduto: {
     flex: 1,
   },
   nome: {
     fontSize: 18,
-    fontFamily: "NewRocker-Regular",
-    color: "#333",
+    fontWeight: "bold",
+    color: "#1A2233",
   },
   descricao: {
     fontSize: 14,
@@ -373,74 +483,99 @@ const styles = StyleSheet.create({
   preco: {
     fontSize: 16,
     color: "#2c682c",
-    fontFamily: "NewRocker-Regular",
     fontWeight: "bold",
   },
   botoesContainer: {
     flexDirection: "column",
-    justifyContent: "space-between",
+    gap: 8,
   },
   botaoEditar: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#4A6A5A",
     padding: 8,
-    borderRadius: 4,
-    marginBottom: 8,
+    borderRadius: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   botaoExcluir: {
-    backgroundColor: "#F44336",
+    backgroundColor: "#6A0DAD",
     padding: 8,
-    borderRadius: 4,
+    borderRadius: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   botaoCarrinhoFlutuante: {
     position: "absolute",
-    bottom: 20,
+    bottom: 25,
     left: 20,
     right: 20,
-    backgroundColor: "#8a241c",
+    backgroundColor: "#4A6A5A",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
     elevation: 5,
   },
   listaVazia: {
     textAlign: "center",
-    color: "#fff",
+    color: "#6A0DAD",
     fontSize: 16,
     marginTop: 20,
-    fontFamily: "NewRocker-Regular",
+    fontWeight: "bold",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.2)", // Fundo escurecido e levemente desfocado
+    backdropFilter: "blur(8px)", // Efeito de desfoque
   },
   modalContainer: {
-    flex: 1,
-    padding: 16,
-    justifyContent: "center",
-    backgroundColor: "#fff",
+    width: "85%",
+    padding: 25,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 10,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginBottom: 12,
-    padding: 8,
-    borderRadius: 4,
-  },
-  botaoFoto: {
-    backgroundColor: "#9C27B0",
+    backgroundColor: "#FFF",
     padding: 12,
-    alignItems: "center",
+    marginTop: 10,
     borderRadius: 8,
-    marginBottom: 12,
+    borderColor: "#6A0DAD",
+    borderWidth: 2,
+    fontSize: 16,
+    color: "#333",
+    width: "100%",
   },
   botaoSalvar: {
-    backgroundColor: "#4CAF50",
-    padding: 12,
-    alignItems: "center",
-    borderRadius: 8,
-    marginBottom: 8,
+    backgroundColor: "#4A6A5A",
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 15,
+    width: "100%",
   },
   botaoCancelar: {
-    backgroundColor: "#F44336",
-    padding: 12,
-    alignItems: "center",
-    borderRadius: 8,
+    backgroundColor: "#6A0DAD",
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 10,
+    width: "100%",
   },
   fotoProdutoModal: {
     width: 150,
@@ -448,5 +583,55 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderRadius: 8,
     marginBottom: 12,
+    marginTop:10,
+  },
+  botaoFoto: {
+    backgroundColor: "#6A0DAD",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 0,
+    width: '15%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  listaCarrinho: {
+    backgroundColor: '#FFF',
+    padding: 15,
+    marginBottom: 70,
+    borderTopWidth: 2,
+    borderColor: '#6A0DAD',
+  },
+  quantidadeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+  },
+   searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    margin: 15,
+    padding: 15,
+    borderRadius: 10,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1A2233",
   },
 });
