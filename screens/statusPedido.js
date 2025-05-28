@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native';
 import { observarPedido } from '../firebaseService';
 
+
 const statusList = ['Pedido Recebido', 'Em Preparo', 'Pronto para Retirada'];
 
 export default function StatusPedido({ navigation, route }) {
@@ -29,6 +30,14 @@ export default function StatusPedido({ navigation, route }) {
               {traduzirStatus(pedido.status)}
             </Text>
           </View>
+          <Text style={styles.pedido}>Você pode acompanhar o status do seu pedido na tela de Perfil</Text>
+          <TouchableOpacity
+            style={styles.backbutton}
+            onPress={() => navigation.EstabelecimentosScreen()}
+            >
+            <Text style={styles.botaoGoback}>{"<"}</Text>
+          </TouchableOpacity>
+
         </>
       )}
     </View>
@@ -108,6 +117,20 @@ statusText: {
   color: '#fff',
   fontSize: 22,
   fontFamily: 'NewRocker-Regular',
-}
+},
+backbutton: {
+    backgroundColor: "#4A6A5A",
+    padding: 10,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+},
+botaoGoback: {
+    color: "#FFF",
+    fontSize: 20,
+  },
+
 });
 

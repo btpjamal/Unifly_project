@@ -15,6 +15,7 @@ import { buscarProdutosDoEstabelecimento, salvarPedido } from "../firebaseServic
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-web";
 
 export default function CardapioCliente({ navigation, route }) {
   const { comercioId } = route.params;
@@ -155,8 +156,8 @@ const atualizarCarrinho = (produto, action = 'increment') => {
   }
 };
 
-   return (
-    <View style={styles.fundo}>
+    return (
+    <SafeAreaView style={styles.fundo}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backbutton}
@@ -201,6 +202,7 @@ const atualizarCarrinho = (produto, action = 'increment') => {
       </View>
 
       <FlatList
+        style={{ flex: 1 }}
         data={produtosFiltrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.lista}
@@ -226,47 +228,39 @@ const atualizarCarrinho = (produto, action = 'increment') => {
             </TouchableOpacity>
           </View>
         )}
+        ListFooterComponent={
+          <>
+            <View style={styles.listaCarrinho}>
+              <Text style={styles.subtituloCarrinho}>Itens no Carrinho:</Text>
+              
+              {carrinho.length === 0 ? (
+                <Text style={styles.textoVazio}>Nenhum item adicionado</Text>
+              ) : (
+                carrinho.map((item) => (
+                  <View key={item.id} style={styles.itemCarrinho}>
+                    <View style={styles.infoItem}>
+                      <Text style={styles.nomeItem}>{item.nome}</Text>
+                      <Text style={styles.quantidadeItem}>x{item.quantidade}</Text>
+                    </View>
+                    <Text style={styles.precoItem}>
+                      R$ {(item.preco * item.quantidade).toFixed(2)}
+                    </Text>
+                  </View>
+                ))
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={styles.botaoFinalizar}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={styles.botaoTexto}>
+                Finalizar Pedido 🛒({carrinho.reduce((sum, item) => sum + item.quantidade, 0)})
+              </Text>
+            </TouchableOpacity>
+          </>
+        }
       />
-      <View style={styles.listaCarrinho}>
-  <Text style={styles.subtituloCarrinho}>Itens no Carrinho:</Text>
-  
-  {carrinho.length === 0 ? (
-    <Text style={styles.textoVazio}>Nenhum item adicionado</Text>
-  ) : (
-    carrinho.map((item) => (
-      <View key={item.id} style={styles.itemCarrinho}>
-        <View style={styles.infoItem}>
-          <Text style={styles.nomeItem}>{item.nome}</Text>
-          <Text style={styles.quantidadeItem}>x{item.quantidade}</Text>
-        </View>
-        <Text style={styles.precoItem}>
-          R$ {(item.preco * item.quantidade).toFixed(2)}
-        </Text>
-      </View>
-    ))
-  )}
-</View>
-
-{/* Botão Flutuante (mantido para abrir o modal de pagamento) */}
-<TouchableOpacity
-  style={styles.botaoCarrinhoFlutuante}
-  onPress={() => setModalVisible(true)}
->
-  <Text style={styles.botaoTexto}>
-    Finalizar Pedido 🛒({carrinho.reduce((sum, item) => sum + item.quantidade, 0)})
-  </Text>
-</TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.botaoCarrinhoFlutuante}
-        onPress={() => setModalVisible(true)}
-      >
-       <Text style={styles.botaoTexto}>
-  Ver Carrinho 🛒(
-  {carrinho.reduce((sum, item) => sum + (item.quantidade || 0), 0)}
-  )
-</Text>
-      </TouchableOpacity>
 
       {/* Modal de Pagamento */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
@@ -330,11 +324,15 @@ const atualizarCarrinho = (produto, action = 'increment') => {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  fundo: {
+    flex: 1,
+    backgroundColor: '#F0F4F7',
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -387,7 +385,6 @@ const styles = StyleSheet.create({
   botaoGoback: {
     color: "#FFF",
     fontSize: 20,
-
   },
   background: {
     flex: 1,
@@ -395,7 +392,7 @@ const styles = StyleSheet.create({
   },
   lista: {
     paddingHorizontal: 15,
-    paddingBottom: 80,
+    paddingBottom: 15,
   },
   itemContainer: {
     backgroundColor: "#FFF",
@@ -405,7 +402,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
@@ -443,7 +439,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-    botaoDecrementar: {
+  botaoDecrementar: {
     backgroundColor: "#6A0DAD",
     borderRadius: 20,
     width: 40,
@@ -455,22 +451,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5,
-    marginLeft: 8, // Adicione esta linha
-  },
-  botaoCarrinhoFlutuante: {
-    position: "absolute",
-    bottom: 25,
-    left: 20,
-    right: 20,
-    backgroundColor: "#4A6A5A",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    marginLeft: 8,
   },
   listaVazia: {
     textAlign: "center",
@@ -493,7 +474,6 @@ const styles = StyleSheet.create({
   botaoTexto: {
     color: '#fff',
     fontSize: 16,
-
   },
   searchContainer: {
     flexDirection: "row",
@@ -502,7 +482,6 @@ const styles = StyleSheet.create({
     margin: 15,
     padding: 15,
     borderRadius: 10,
-    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
@@ -517,7 +496,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#1A2233",
   },
-    emptyContainer: {
+  emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -529,12 +508,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: "center",
   },
-    modalOverlay: {
+  modalOverlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.2)", // Fundo escurecido e levemente desfocado
-    backdropFilter: "blur(8px)", // Efeito de desfoque
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContainer: {
     width: "85%",
@@ -612,63 +590,77 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: "#1A2233",
   },
-  botaoFechar:{
+  botaoFechar: {
     backgroundColor: "#4A6A5A",
     alignItems: "center",
     padding: 15,
     borderRadius: 10,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    marginTop: 10,
+    width: '100%',
   },
   listaCarrinho: {
-  backgroundColor: '#FFF',
-  padding: 15,
-  marginBottom: 70, // Cria espaço para o botão
-  borderTopWidth: 2,
-  borderColor: '#6A0DAD',
-},
-subtituloCarrinho: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: '#1A2233',
-  marginBottom: 10,
-},
-itemCarrinho: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 8,
-  paddingVertical: 5,
-  borderBottomWidth: 1,
-  borderColor: '#EEE',
-},
-infoItem: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 10,
-},
-nomeItem: {
-  fontSize: 14,
-  color: '#333',
-},
-quantidadeItem: {
-  fontSize: 12,
-  color: '#666',
-  backgroundColor: '#F0F0F0',
-  paddingHorizontal: 8,
-  borderRadius: 10,
-},
-precoItem: {
-  fontSize: 14,
-  color: '#2c682c',
-  fontWeight: 'bold',
-},
-textoVazio: {
-  fontStyle: 'italic',
-  color: '#999',
-  textAlign: 'center',
-  marginVertical: 10,
-},
+    backgroundColor: '#FFF',
+    padding: 15,
+    marginTop: 10,
+    borderTopWidth: 2,
+    borderColor: '#6A0DAD',
+    borderRadius: 10,
+    marginHorizontal: 15,
+    marginBottom: 15,
+  },
+  subtituloCarrinho: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1A2233',
+    marginBottom: 10,
+  },
+  itemCarrinho: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderColor: '#EEE',
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  nomeItem: {
+    fontSize: 14,
+    color: '#333',
+  },
+  quantidadeItem: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#F0F0F0',
+    paddingHorizontal: 8,
+    borderRadius: 10,
+  },
+  precoItem: {
+    fontSize: 14,
+    color: '#2c682c',
+    fontWeight: 'bold',
+  },
+  textoVazio: {
+    fontStyle: 'italic',
+    color: '#999',
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  botaoFinalizar: {
+    backgroundColor: "#4A6A5A",
+    padding: 15,
+    borderRadius: 10,
+    marginHorizontal: 20,
+    marginBottom: 25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
 });
