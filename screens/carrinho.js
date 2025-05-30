@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
 } from "react-native";
+import { StatusBar } from "react-native";
 
 export default function Carrinho({ route, navigation }) {
   const [itensCarrinho, setItensCarrinho] = useState([]);

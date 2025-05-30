@@ -1,13 +1,12 @@
 // screens/statuspedido.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { observarPedido } from '../firebaseService';
-
 
 const statusList = ['Pedido Recebido', 'Em Preparo', 'Pronto para Retirada'];
 
 export default function StatusPedido({ navigation, route }) {
-  const { pedidoId } = route.params; // Alterar para receber pedidoId ao invés de numeroPedido
+  const { pedidoId } = route.params;
   const [pedido, setPedido] = useState(null);
 
   useEffect(() => {
@@ -18,70 +17,68 @@ export default function StatusPedido({ navigation, route }) {
     return () => unsubscribe();
   }, [pedidoId]);
 
+  const traduzirStatus = (status) => {
+    const traducoes = {
+      pendente: "🕒 Pedido Recebido",
+      preparo: "👨🍳 Em Preparo",
+      pronto: "✅ Pronto para Retirada",
+      entregue: "🛵 Entregue"
+    };
+    return traducoes[status] || status;
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={styles.background}>
       {pedido && (
         <>
+          {/* Botão de voltar reposicionado e aumentado */}
+          <TouchableOpacity
+            style={styles.backbutton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.textBackButton}>{"<"}</Text>
+          </TouchableOpacity>
+
           <Text style={styles.title}>Status do Pedido</Text>
           <Text style={styles.pedido}>Pedido #{pedido.id.slice(0, 6)}</Text>
           
+          {/* Status alterado para roxo */}
           <View style={styles.statusBox}>
             <Text style={styles.statusText}>
               {traduzirStatus(pedido.status)}
             </Text>
           </View>
+          
           <Text style={styles.pedido}>Você pode acompanhar o status do seu pedido na tela de Perfil</Text>
-          <TouchableOpacity
-            style={styles.backbutton}
-            onPress={() => navigation.EstabelecimentosScreen()}
-            >
-            <Text style={styles.botaoGoback}>{"<"}</Text>
-          </TouchableOpacity>
-
         </>
       )}
     </View>
   );
 }
 
-// Helper para traduzir status
-const traduzirStatus = (status) => {
-  const traducoes = {
-    pendente: "🕒 Pedido Recebido",
-    preparo: "👨🍳 Em Preparo",
-    pronto: "✅ Pronto para Retirada",
-    entregue: "🛵 Entregue"
-  };
-  return traducoes[status] || status;
-};
-
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    resizeMode: 'cover',
-  },
-  container: {
-    flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 28,
-    color: '#fff',
+    color: 'black',
     textAlign: 'center',
     marginBottom: 15,
-    fontFamily: 'NewRocker-Regular',
+    fontWeight: "bold",
   },
   pedido: {
     fontSize: 20,
-    color: '#fff',
+    color: 'black',
     textAlign: 'center',
     marginBottom: 20,
-    fontFamily: 'NewRocker-Regular',
   },
+  // Status alterado para roxo
   statusBox: {
-    backgroundColor: '#8a241c',
+    backgroundColor: '#6a0dad', // Roxo
     padding: 30,
     borderRadius: 15,
     alignItems: 'center',
@@ -90,47 +87,25 @@ const styles = StyleSheet.create({
   statusText: {
     color: '#fff',
     fontSize: 22,
-    fontFamily: 'NewRocker-Regular',
+    fontWeight: 'bold',
   },
-  button: {
-    backgroundColor: '#306030',
-    padding: 15,
-    borderRadius: 10,
-    alignSelf: 'center',
-    width: '70%',
-  },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontFamily: 'NewRocker-Regular',
-    fontSize: 16,
-  },
-  // Adicione ao StyleSheet:
-statusBox: {
-  backgroundColor: '#8a241c',
-  padding: 30,
-  borderRadius: 15,
-  alignItems: 'center',
-  marginBottom: 30,
-},
-statusText: {
-  color: '#fff',
-  fontSize: 22,
-  fontFamily: 'NewRocker-Regular',
-},
-backbutton: {
+  // Botão de voltar maior e posicionado no canto superior esquerdo
+  backbutton: {
     backgroundColor: "#4A6A5A",
-    padding: 10,
-    borderRadius: 20,
-    width: 40,
-    height: 40,
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    borderRadius: 30,
+    width: 60,
+    height: 60,
     justifyContent: "center",
     alignItems: "center",
-},
-botaoGoback: {
-    color: "#FFF",
-    fontSize: 20,
+    zIndex: 1,
   },
-
-});
-
+  textBackButton: {
+    color: "#FFF",
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginTop: -4,
+  },
+});        

@@ -1,3 +1,4 @@
+import 'expo-crypto';
 import { useState, useEffect} from 'react';
 import { Text, StyleSheet} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';

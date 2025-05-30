@@ -74,7 +74,7 @@ export default function Login({ navigation }) {
 
   return (
       <View style={styles.container}>
-        <h1 style={styles.title}>Login</h1>
+        <Text style={styles.title}>Login</Text>
 
         <TextInput
           style={styles.input}
@@ -94,7 +94,7 @@ export default function Login({ navigation }) {
         />
 
         {carregando ? (
-          <ActivityIndicator size="large" color="#8a241c" />
+          <ActivityIndicator size="large" color="#1c2c40" />
         ) : (
           <TouchableOpacity style={styles.buttonentrar} onPress={handleLogin}>
             <Text style={styles.buttonText}>Entrar</Text>

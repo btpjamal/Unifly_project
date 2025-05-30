@@ -15,7 +15,7 @@ import { buscarProdutosDoEstabelecimento, salvarPedido } from "../firebaseServic
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-web";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CardapioCliente({ navigation, route }) {
   const { comercioId } = route.params;

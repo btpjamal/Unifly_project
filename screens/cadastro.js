@@ -39,7 +39,7 @@ export default function Cadastro({ navigation }) {
 
   return (
       <View style={styles.container}>
-        <h1 style={styles.title}>Cadastro</h1>
+        <Text style={styles.title}>Cadastro</Text>
 
         <TextInput style={styles.input} placeholder="Nome" value={nome} onChangeText={setNome} />
         <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
@@ -134,34 +134,32 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Medium',
   },
   botaoGoback: {
-  color: '#FFFFFF',
-  fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 16,
   },
   tipoButton: {
-  padding: 10,
-  borderRadius: 5,
-  marginHorizontal: 5,
-  backgroundColor: '#f3ece7',
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.6,
-  shadowRadius: 4,
-  elevation: 5,
-},
-tipoButtonSelecionado: {
-  backgroundColor: '#f3ece7',
-  shadowColor: "#ffff",
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.6,
-  shadowRadius: 4,
-  elevation: 5,
-
-},
-tipoButtonText: {
-  fontFamily: 'Roboto-Medium',
-  color: 'black',
-},
-
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+    backgroundColor: '#f3ece7',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  tipoButtonSelecionado: {
+    backgroundColor: '#f3ece7',
+    shadowColor: "#ffff",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  tipoButtonText: {
+    fontFamily: 'Roboto-Medium',
+    color: 'black',
+  },
 });
 
 

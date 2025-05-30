@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto';
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -23,7 +24,7 @@ import {
 } from "../firebaseService";
 import * as ImagePicker from 'expo-image-picker';
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { v4 as uuidv4 } from 'uuid';
+//import { v4 as uuidv4 } from 'uuid';
 import { Ionicons } from "@expo/vector-icons";
 
 // Suprimir avisos específicos
@@ -160,7 +161,10 @@ export default function CardapioProprietario({ navigation }) {
     }
     
     const blob = await response.blob();
-    const nomeArquivo = uuidv4();
+    const nomeArquivo = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256, 
+      Date.now().toString()
+    );
     
     // CORREÇÃO: Usar a estrutura produtos/{comercioId}/{nomeArquivo}
     const storageRef = ref(storage, `produtos/${comercioId}/${nomeArquivo}`);
@@ -191,10 +195,13 @@ export default function CardapioProprietario({ navigation }) {
         fotoUrl = await uploadImagem(novoProduto.foto);
         console.log("Upload de imagem concluído:", fotoUrl);
       }
+      const precoString = String(novoProduto.preco || '');
 
-      const precoNumerico = parseFloat(
-        novoProduto.preco.replace(',', '.').replace(/[^0-9.]/g, '')
-      );
+      const cleanedPreco = precoString
+      .replace(',', '.')
+      .replace(/[^0-9.]/g, '');
+
+      const precoNumerico = parseFloat(cleanedPreco);
       
       if (isNaN(precoNumerico)) {
         throw new Error("Preço inválido");
@@ -297,6 +304,7 @@ export default function CardapioProprietario({ navigation }) {
             <Ionicons name="close-circle" size={20} color="#6A0DAD" />
           </TouchableOpacity>
         )}
+
       </View>
 
       <FlatList
@@ -374,10 +382,11 @@ export default function CardapioProprietario({ navigation }) {
               placeholder="Preço*"
               keyboardType="decimal-pad"
               value={novoProduto.preco}
-              onChangeText={(text) => setNovoProduto(prev => ({ 
-                ...prev, 
-                preco: text.replace(/[^0-9.,]/g, '') 
-              }))}
+              onChangeText={(text) => {
+              // Permite apenas números, vírgula e ponto
+              const cleanedText = text.replace(/[^0-9,.]/g, '');
+              setNovoProduto(prev => ({ ...prev, preco: cleanedText }));
+              }}
             />
             
             <TextInput
