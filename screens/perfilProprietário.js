@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,34 +8,36 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  Platform
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAuth, signOut } from 'firebase/auth';
-import { observarPedidos, atualizarStatusPedido } from '../firebaseService';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+  Platform,
+  StatusBar,
+  SafeAreaView,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuth, signOut } from "firebase/auth";
+import { observarPedidos, atualizarStatusPedido } from "../firebaseService";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function PerfilScreenProprietario({ navigation }) {
   const [comercioId, setComercioId] = useState(null);
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [endereco, setEndereco] = useState('');
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [endereco, setEndereco] = useState("");
   const [foto, setFoto] = useState(null);
   const [editando, setEditando] = useState(false);
   const [filtroTexto, setFiltroTexto] = useState("");
   const [historicoPedidos, setHistoricoPedidos] = useState([]);
   const [pedidoFiltrados, setPedidosFiltrados] = useState([]);
-  const statusOptions = ['pendente', 'preparo', 'pronto', 'entregue'];
+  const statusOptions = ["pendente", "preparo", "pronto", "entregue"];
 
   const traduzirStatus = (status) => {
     const traducoes = {
       pendente: "🕒 Pedido Recebido",
       preparo: "👨🍳 Em Preparo",
       pronto: "✅ Pronto para Retirada",
-      entregue: "🛵 Entregue"
+      entregue: "🛵 Entregue",
     };
     return traducoes[status] || status;
   };
@@ -45,8 +47,8 @@ export default function PerfilScreenProprietario({ navigation }) {
       if (!pedidoId || !novoStatus) return;
       await atualizarStatusPedido(pedidoId, novoStatus);
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      Alert.alert('Erro', 'Não foi possível atualizar o status');
+      console.error("Erro ao atualizar status:", error);
+      Alert.alert("Erro", "Não foi possível atualizar o status");
     }
   };
 
@@ -58,43 +60,46 @@ export default function PerfilScreenProprietario({ navigation }) {
     const carregarDados = async () => {
       try {
         const db = getFirestore();
-        const userRef = doc(db, 'usuarios', usuario.uid);
+        const userRef = doc(db, "usuarios", usuario.uid);
         const userDoc = await getDoc(userRef);
 
         const dadosIniciais = {
-          nome: usuario.displayName || 'Nome desconhecido',
-          endereco: '',
-          fotoPerfil: null
+          nome: usuario.displayName || "Nome desconhecido",
+          endereco: "",
+          fotoPerfil: null,
         };
 
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setComercioId(userData.comercioId);
           setNome(userData.nome || dadosIniciais.nome);
-          setEndereco(userData.endereco || '');
+          setEndereco(userData.endereco || "");
           setFoto(userData.fotoPerfil || null);
-          setEmail(userData.email || '');
+          setEmail(userData.email || "");
 
           if (userData.comercioId) {
-            unsubscribePedidos = observarPedidos(userData.comercioId, (pedidos) => {
-              setHistoricoPedidos(pedidos);
-              setPedidosFiltrados(pedidos);
-            });
+            unsubscribePedidos = observarPedidos(
+              userData.comercioId,
+              (pedidos) => {
+                setHistoricoPedidos(pedidos);
+                setPedidosFiltrados(pedidos);
+              }
+            );
           }
         } else {
           await updateDoc(userRef, dadosIniciais);
           setNome(dadosIniciais.nome);
         }
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        Alert.alert('Erro', 'Falha ao carregar o perfil');
+        console.error("Erro ao carregar dados:", error);
+        Alert.alert("Erro", "Falha ao carregar o perfil");
       }
     };
 
     if (usuario) {
       carregarDados();
     } else {
-      navigation.navigate('login');
+      navigation.navigate("login");
     }
 
     return () => {
@@ -103,32 +108,34 @@ export default function PerfilScreenProprietario({ navigation }) {
   }, [navigation]);
 
   useEffect(() => {
-  const filtrarPedidos = () => {
-    const texto = filtroTexto.toLowerCase();
-    
-    const filtrados = historicoPedidos.filter(pedido => {
-      return (
-        (pedido.uid?.toLowerCase().includes(texto)) || 
-        (pedido.itens?.some(item => item.nome?.toLowerCase().includes(texto))) || 
-        (pedido.id?.toLowerCase().includes(texto))
-      );
-    });
+    const filtrarPedidos = () => {
+      const texto = filtroTexto.toLowerCase();
 
-    setPedidosFiltrados(filtrados);
-  };
-  filtrarPedidos();
-}, [filtroTexto, historicoPedidos]);
+      const filtrados = historicoPedidos.filter((pedido) => {
+        return (
+          pedido.uid?.toLowerCase().includes(texto) ||
+          pedido.itens?.some((item) =>
+            item.nome?.toLowerCase().includes(texto)
+          ) ||
+          pedido.id?.toLowerCase().includes(texto)
+        );
+      });
+
+      setPedidosFiltrados(filtrados);
+    };
+    filtrarPedidos();
+  }, [filtroTexto, historicoPedidos]);
 
   const escolherFoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       quality: 0.3,
       aspect: [1, 1],
-      base64: Platform.OS === 'web',
+      base64: Platform.OS === "web",
     });
 
     if (!result.canceled) {
-      if (Platform.OS === 'web') {
+      if (Platform.OS === "web") {
         const base64 = `data:image/jpeg;base64,${result.assets[0].base64}`;
         setFoto(base64);
       } else {
@@ -138,60 +145,63 @@ export default function PerfilScreenProprietario({ navigation }) {
   };
 
   const salvarDados = async () => {
-  const auth = getAuth();
-  const usuario = auth.currentUser;
+    const auth = getAuth();
+    const usuario = auth.currentUser;
 
-  if (!usuario) {
-    Alert.alert('Erro', 'Usuário não autenticado.');
-    return;
-  }
-
-  try {
-    const db = getFirestore();
-    const userRef = doc(db, 'usuarios', usuario.uid);
-    const storage = getStorage();
-    let novaFoto = foto;
-
-    // Verificação adicional de autenticação
-    if (!usuario.uid) {
-      throw new Error("UID do usuário não disponível");
+    if (!usuario) {
+      Alert.alert("Erro", "Usuário não autenticado.");
+      return;
     }
 
-    // Upload apenas se a foto for nova
-    if (foto && !foto.startsWith('https://')) { // Ajuste para seu domínio
-      console.log("Iniciando upload para:", `perfil/${usuario.uid}/fotoPerfil.jpg`);
-      
-      // Converta para Blob
-      const response = await fetch(foto);
-      const blob = await response.blob();
+    try {
+      const db = getFirestore();
+      const userRef = doc(db, "usuarios", usuario.uid);
+      const storage = getStorage();
+      let novaFoto = foto;
 
-      // Referência do Storage com UID
-      const storageRef = ref(storage, `perfil/${usuario.uid}/fotoPerfil.jpg`);
-      
-      // Faça o upload
-      await usuario.getIdToken(/* forceRefresh */ true);
-      await uploadBytes(storageRef, blob);
-      novaFoto = await getDownloadURL(storageRef);
-      console.log("Upload concluído. Nova URL:", novaFoto);
+      // Verificação adicional de autenticação
+      if (!usuario.uid) {
+        throw new Error("UID do usuário não disponível");
+      }
+
+      // Upload apenas se a foto for nova
+      if (foto && !foto.startsWith("https://")) {
+        // Ajuste para seu domínio
+        console.log(
+          "Iniciando upload para:",
+          `perfil/${usuario.uid}/fotoPerfil.jpg`
+        );
+
+        // Converta para Blob
+        const response = await fetch(foto);
+        const blob = await response.blob();
+
+        // Referência do Storage com UID
+        const storageRef = ref(storage, `perfil/${usuario.uid}/fotoPerfil.jpg`);
+
+        // Faça o upload
+        await usuario.getIdToken(/* forceRefresh */ true);
+        await uploadBytes(storageRef, blob);
+        novaFoto = await getDownloadURL(storageRef);
+        console.log("Upload concluído. Nova URL:", novaFoto);
+      }
+
+      // Atualize o Firestore
+      await updateDoc(userRef, {
+        fotoPerfil: novaFoto,
+        endereco: endereco,
+      });
+
+      setEditando(false);
+      Alert.alert("Sucesso", "Foto atualizada!");
+    } catch (error) {
+      console.error("Erro detalhado:", error.code, error.message);
+      Alert.alert("Erro", error.message || "Falha no upload");
     }
-
-    // Atualize o Firestore
-    await updateDoc(userRef, {
-      fotoPerfil: novaFoto,
-      endereco: endereco
-    });
-
-    setEditando(false);
-    Alert.alert('Sucesso', 'Foto atualizada!');
-
-  } catch (error) {
-    console.error('Erro detalhado:', error.code, error.message);
-    Alert.alert('Erro', error.message || 'Falha no upload');
-  }
-};
+  };
 
   return (
-    <View style={styles.fundo}>
+    <SafeAreaView style={styles.fundo}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backbutton}
@@ -225,7 +235,9 @@ export default function PerfilScreenProprietario({ navigation }) {
       <ScrollView contentContainerStyle={styles.container}>
         <TouchableOpacity onPress={editando ? escolherFoto : null}>
           <Image
-            source={foto ? { uri: foto } : require("../assets/avatarpadrao.png")}
+            source={
+              foto ? { uri: foto } : require("../assets/avatarpadrao.png")
+            }
             style={styles.fotoPerfil}
           />
           {editando && <Text style={styles.trocarFoto}>Trocar Foto</Text>}
@@ -248,7 +260,9 @@ export default function PerfilScreenProprietario({ navigation }) {
           value={endereco}
           onChangeText={setEndereco}
         />
-
+        <TouchableOpacity>
+          <Text>Cor primária</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.botao}
           onPress={() => {
@@ -311,12 +325,12 @@ export default function PerfilScreenProprietario({ navigation }) {
                     key={status}
                     style={[
                       styles.statusButton,
-                      pedido.status === status && styles.selectedStatus
+                      pedido.status === status && styles.selectedStatus,
                     ]}
                     onPress={() => atualizarStatus(pedido.id, status)}
                   >
                     <Text style={styles.buttonText}>
-                      {traduzirStatus(status).split(' ')[1]}
+                      {traduzirStatus(status).split(" ")[1]}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -325,7 +339,7 @@ export default function PerfilScreenProprietario({ navigation }) {
           ))
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -333,6 +347,7 @@ const styles = StyleSheet.create({
   fundo: {
     flex: 1,
     backgroundColor: "#F5F7FA",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: "row",
@@ -343,6 +358,24 @@ const styles = StyleSheet.create({
     width: "100%",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#1A2233",
+    width: "100%",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   backbutton: {
     backgroundColor: "#4A6A5A",
@@ -434,9 +467,9 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
     borderRadius: 10,
     padding: 12,
     margin: 15,
@@ -445,27 +478,27 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: 10,
-    color: '#1A2233',
+    color: "#1A2233",
     fontSize: 16,
   },
   statusButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginTop: 10,
     gap: 5,
   },
   statusButton: {
-    backgroundColor: '#6A0DAD',
+    backgroundColor: "#6A0DAD",
     padding: 8,
     borderRadius: 5,
     minWidth: 80,
-    alignItems: 'center',
+    alignItems: "center",
   },
   selectedStatus: {
-    backgroundColor: '#4A6A5A',
+    backgroundColor: "#4A6A5A",
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 12,
   },
 });

@@ -1,4 +1,4 @@
-import * as Crypto from 'expo-crypto';
+import * as Crypto from "expo-crypto";
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -11,7 +11,10 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
-  LogBox
+  LogBox,
+  Platform,
+  StatusBar,
+  SafeAreaView,
 } from "react-native";
 import { getAuth } from "firebase/auth";
 import { getDoc, doc } from "firebase/firestore";
@@ -22,14 +25,14 @@ import {
   atualizarProduto,
   excluirProduto,
 } from "../firebaseService";
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 //import { v4 as uuidv4 } from 'uuid';
 import { Ionicons } from "@expo/vector-icons";
 
 // Suprimir avisos específicos
 LogBox.ignoreLogs([
-  'props.pointerEvents is deprecated. Use style.pointerEvents'
+  "props.pointerEvents is deprecated. Use style.pointerEvents",
 ]);
 
 export default function CardapioProprietario({ navigation }) {
@@ -56,7 +59,7 @@ export default function CardapioProprietario({ navigation }) {
     const carregarDados = async () => {
       const auth = getAuth();
       const usuario = auth.currentUser;
-      
+
       if (!usuario) {
         if (isMounted.current) navigation.navigate("login");
         return;
@@ -65,7 +68,7 @@ export default function CardapioProprietario({ navigation }) {
       try {
         const usuarioDoc = await getDoc(doc(db, "usuarios", usuario.uid));
         if (!isMounted.current) return;
-        
+
         const comercio = usuarioDoc.data().comercioId;
         setComercioId(comercio);
 
@@ -78,7 +81,8 @@ export default function CardapioProprietario({ navigation }) {
         const lista = await buscarProdutosComercio(comercio);
         if (isMounted.current) setProdutos(lista);
       } catch (error) {
-        if (isMounted.current) Alert.alert("Erro", "Falha ao carregar dados: " + error.message);
+        if (isMounted.current)
+          Alert.alert("Erro", "Falha ao carregar dados: " + error.message);
       }
     };
 
@@ -88,15 +92,16 @@ export default function CardapioProprietario({ navigation }) {
       isMounted.current = false;
     };
   }, []);
-  
+
   useEffect(() => {
     if (filtroTexto.trim() === "") {
       setProdutosFiltrados(produtos);
     } else {
-      const filtrados = produtos.filter((item) =>
-        item.nome?.toLowerCase().includes(filtroTexto.toLowerCase()) ||
-        (item.descricao &&
-        item.descricao.toLowerCase().includes(filtroTexto.toLowerCase()))
+      const filtrados = produtos.filter(
+        (item) =>
+          item.nome?.toLowerCase().includes(filtroTexto.toLowerCase()) ||
+          (item.descricao &&
+            item.descricao.toLowerCase().includes(filtroTexto.toLowerCase()))
       );
       setProdutosFiltrados(filtrados);
     }
@@ -105,22 +110,25 @@ export default function CardapioProprietario({ navigation }) {
   const abrirModal = (produto = null) => {
     setProdutoEditando(produto);
     setNovoProduto(
-      produto ? { ...produto } : {
-        nome: "",
-        descricao: "",
-        preco: "",
-        estoque: "",
-        foto: null
-      }
+      produto
+        ? { ...produto }
+        : {
+            nome: "",
+            descricao: "",
+            preco: "",
+            estoque: "",
+            foto: null,
+          }
     );
     setModalVisivel(true);
   };
 
   const escolherFotoProduto = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permissão necessária', 'Precisamos acesso às suas fotos');
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permissão necessária", "Precisamos acesso às suas fotos");
         return;
       }
 
@@ -131,10 +139,14 @@ export default function CardapioProprietario({ navigation }) {
         quality: 1,
       });
 
-      if (!resultado.canceled && resultado.assets && resultado.assets.length > 0) {
-        setNovoProduto(prev => ({
+      if (
+        !resultado.canceled &&
+        resultado.assets &&
+        resultado.assets.length > 0
+      ) {
+        setNovoProduto((prev) => ({
           ...prev,
-          foto: resultado.assets[0].uri
+          foto: resultado.assets[0].uri,
         }));
       }
     } catch (error) {
@@ -142,40 +154,40 @@ export default function CardapioProprietario({ navigation }) {
     }
   };
 
-   const uploadImagem = async (uri) => {
-  try {
-    if (!comercioId) {
-      throw new Error("ID do comércio não disponível");
-    }
+  const uploadImagem = async (uri) => {
+    try {
+      if (!comercioId) {
+        throw new Error("ID do comércio não disponível");
+      }
 
-    const auth = getAuth();
-    const user = auth.currentUser;
-    
-    if (!user) {
-      throw new Error("Usuário não autenticado. Faça login novamente.");
-    }
+      const auth = getAuth();
+      const user = auth.currentUser;
 
-    const response = await fetch(uri);
-    if (!response.ok) {
-      throw new Error(`Falha ao buscar imagem: ${response.status}`);
+      if (!user) {
+        throw new Error("Usuário não autenticado. Faça login novamente.");
+      }
+
+      const response = await fetch(uri);
+      if (!response.ok) {
+        throw new Error(`Falha ao buscar imagem: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const nomeArquivo = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        Date.now().toString()
+      );
+
+      // CORREÇÃO: Usar a estrutura produtos/{comercioId}/{nomeArquivo}
+      const storageRef = ref(storage, `produtos/${comercioId}/${nomeArquivo}`);
+
+      await uploadBytes(storageRef, blob);
+      return await getDownloadURL(storageRef);
+    } catch (error) {
+      console.error("Erro detalhado no upload:", error);
+      throw new Error("Falha no upload da imagem: " + error.message);
     }
-    
-    const blob = await response.blob();
-    const nomeArquivo = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256, 
-      Date.now().toString()
-    );
-    
-    // CORREÇÃO: Usar a estrutura produtos/{comercioId}/{nomeArquivo}
-    const storageRef = ref(storage, `produtos/${comercioId}/${nomeArquivo}`);
-    
-    await uploadBytes(storageRef, blob);
-    return await getDownloadURL(storageRef);
-  } catch (error) {
-    console.error("Erro detalhado no upload:", error);
-    throw new Error("Falha no upload da imagem: " + error.message);
-  }
-};
+  };
 
   const salvarProduto = async () => {
     if (!novoProduto.nome || !novoProduto.preco) {
@@ -185,24 +197,24 @@ export default function CardapioProprietario({ navigation }) {
 
     if (carregando) return;
     setCarregando(true);
-    
+
     try {
       let fotoUrl = novoProduto.foto;
 
       // Upload apenas se for uma nova imagem
-      if (novoProduto.foto && !novoProduto.foto.startsWith('http')) {
+      if (novoProduto.foto && !novoProduto.foto.startsWith("http")) {
         console.log("Iniciando upload da imagem...");
         fotoUrl = await uploadImagem(novoProduto.foto);
         console.log("Upload de imagem concluído:", fotoUrl);
       }
-      const precoString = String(novoProduto.preco || '');
+      const precoString = String(novoProduto.preco || "");
 
       const cleanedPreco = precoString
-      .replace(',', '.')
-      .replace(/[^0-9.]/g, '');
+        .replace(",", ".")
+        .replace(/[^0-9.]/g, "");
 
       const precoNumerico = parseFloat(cleanedPreco);
-      
+
       if (isNaN(precoNumerico)) {
         throw new Error("Preço inválido");
       }
@@ -212,23 +224,28 @@ export default function CardapioProprietario({ navigation }) {
         descricao: novoProduto.descricao,
         preco: precoNumerico,
         estoque: parseInt(novoProduto.estoque) || 0,
-        foto: fotoUrl
+        foto: fotoUrl,
       };
 
       if (produtoEditando) {
         await atualizarProduto(comercioId, produtoEditando.id, dadosProduto);
-        setProdutos(prev => prev.map(p => 
-          p.id === produtoEditando.id ? { ...dadosProduto, id: p.id } : p
-        ));
+        setProdutos((prev) =>
+          prev.map((p) =>
+            p.id === produtoEditando.id ? { ...dadosProduto, id: p.id } : p
+          )
+        );
       } else {
         const novoId = await adicionarProduto(comercioId, dadosProduto);
-        setProdutos(prev => [...prev, { ...dadosProduto, id: novoId }]);
+        setProdutos((prev) => [...prev, { ...dadosProduto, id: novoId }]);
       }
 
       setModalVisivel(false);
     } catch (error) {
       console.error("Erro completo ao salvar produto:", error);
-      Alert.alert("Erro", error.message || "Ocorreu um erro ao salvar o produto");
+      Alert.alert(
+        "Erro",
+        error.message || "Ocorreu um erro ao salvar o produto"
+      );
     } finally {
       setCarregando(false);
     }
@@ -250,18 +267,21 @@ export default function CardapioProprietario({ navigation }) {
           onPress: async () => {
             try {
               await excluirProduto(comercioId, produtoId);
-              setProdutos(prev => prev.filter(p => p.id !== produtoId));
+              setProdutos((prev) => prev.filter((p) => p.id !== produtoId));
             } catch (error) {
-              Alert.alert("Erro", "Falha ao excluir o produto: " + error.message);
+              Alert.alert(
+                "Erro",
+                "Falha ao excluir o produto: " + error.message
+              );
             }
           },
         },
       ]
     );
   };
-  
+
   return (
-    <View style={styles.background}>
+    <SafeAreaView style={styles.fundo}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backbutton}
@@ -270,13 +290,13 @@ export default function CardapioProprietario({ navigation }) {
         >
           <Ionicons name="exit-outline" size={24} color="#FFF" />
         </TouchableOpacity>
-        
+
         <View style={styles.tituloContainer}>
           <Text style={styles.titulo} numberOfLines={1}>
             {nomeEstabelecimento || "Cardápio"}
           </Text>
         </View>
-        
+
         <TouchableOpacity
           style={styles.botaoPerfil}
           onPress={() => navigation.navigate("perfilProprietário")}
@@ -304,7 +324,6 @@ export default function CardapioProprietario({ navigation }) {
             <Ionicons name="close-circle" size={20} color="#6A0DAD" />
           </TouchableOpacity>
         )}
-
       </View>
 
       <FlatList
@@ -316,7 +335,7 @@ export default function CardapioProprietario({ navigation }) {
             {item.foto && (
               <Image source={{ uri: item.foto }} style={styles.productImage} />
             )}
-            
+
             <View style={styles.infoProduto}>
               <Text style={styles.nome}>{item.nome}</Text>
               <Text style={styles.descricao}>{item.descricao}</Text>
@@ -325,7 +344,7 @@ export default function CardapioProprietario({ navigation }) {
               </Text>
               <Text style={styles.estoque}>Estoque: {item.estoque}</Text>
             </View>
-            
+
             <View style={styles.botoesContainer}>
               <TouchableOpacity
                 onPress={() => abrirModal(item)}
@@ -333,7 +352,7 @@ export default function CardapioProprietario({ navigation }) {
               >
                 <Text style={styles.botaoTexto}>Editar</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 onPress={() => confirmarExclusao(item.id)}
                 style={styles.botaoExcluir}
@@ -360,44 +379,56 @@ export default function CardapioProprietario({ navigation }) {
       <Modal visible={modalVisivel} transparent={true} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            {carregando && <ActivityIndicator size="large" color="#6A0DAD" style={styles.carregandoModal} />}
-            
+            {carregando && (
+              <ActivityIndicator
+                size="large"
+                color="#6A0DAD"
+                style={styles.carregandoModal}
+              />
+            )}
+
             <TextInput
               style={styles.input}
               placeholder="Nome do produto*"
               value={novoProduto.nome}
-              onChangeText={(text) => setNovoProduto(prev => ({ ...prev, nome: text }))}
+              onChangeText={(text) =>
+                setNovoProduto((prev) => ({ ...prev, nome: text }))
+              }
             />
-            
+
             <TextInput
               style={styles.input}
               placeholder="Descrição"
               multiline
               value={novoProduto.descricao}
-              onChangeText={(text) => setNovoProduto(prev => ({ ...prev, descricao: text }))}
+              onChangeText={(text) =>
+                setNovoProduto((prev) => ({ ...prev, descricao: text }))
+              }
             />
-            
+
             <TextInput
               style={styles.input}
               placeholder="Preço*"
               keyboardType="decimal-pad"
               value={novoProduto.preco}
               onChangeText={(text) => {
-              // Permite apenas números, vírgula e ponto
-              const cleanedText = text.replace(/[^0-9,.]/g, '');
-              setNovoProduto(prev => ({ ...prev, preco: cleanedText }));
+                // Permite apenas números, vírgula e ponto
+                const cleanedText = text.replace(/[^0-9,.]/g, "");
+                setNovoProduto((prev) => ({ ...prev, preco: cleanedText }));
               }}
             />
-            
+
             <TextInput
               style={styles.input}
               placeholder="Estoque"
               keyboardType="numeric"
               value={novoProduto.estoque}
-              onChangeText={(text) => setNovoProduto(prev => ({ 
-                ...prev, 
-                estoque: text.replace(/[^0-9]/g, '') 
-              }))}
+              onChangeText={(text) =>
+                setNovoProduto((prev) => ({
+                  ...prev,
+                  estoque: text.replace(/[^0-9]/g, ""),
+                }))
+              }
             />
 
             {novoProduto.foto && (
@@ -407,12 +438,14 @@ export default function CardapioProprietario({ navigation }) {
               />
             )}
 
-            {carregando && novoProduto.foto && !novoProduto.foto.startsWith('http') && (
-              <View style={styles.uploadIndicator}>
-                <ActivityIndicator size="small" color="#FFF" />
-                <Text style={styles.uploadText}>Enviando imagem...</Text>
-              </View>
-            )}
+            {carregando &&
+              novoProduto.foto &&
+              !novoProduto.foto.startsWith("http") && (
+                <View style={styles.uploadIndicator}>
+                  <ActivityIndicator size="small" color="#FFF" />
+                  <Text style={styles.uploadText}>Enviando imagem...</Text>
+                </View>
+              )}
 
             <TouchableOpacity
               onPress={escolherFotoProduto}
@@ -427,17 +460,23 @@ export default function CardapioProprietario({ navigation }) {
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity
                 onPress={salvarProduto}
-                style={[styles.botaoSalvar, carregando && styles.botaoDesabilitado]}
+                style={[
+                  styles.botaoSalvar,
+                  carregando && styles.botaoDesabilitado,
+                ]}
                 disabled={carregando}
               >
                 <Text style={styles.botaoTexto}>
-                  {carregando ? 'Salvando...' : 'Salvar'}
+                  {carregando ? "Salvando..." : "Salvar"}
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 onPress={() => setModalVisivel(false)}
-                style={[styles.botaoCancelar, carregando && styles.botaoDesabilitado]}
+                style={[
+                  styles.botaoCancelar,
+                  carregando && styles.botaoDesabilitado,
+                ]}
                 disabled={carregando}
               >
                 <Text style={styles.botaoTexto}>Cancelar</Text>
@@ -446,14 +485,15 @@ export default function CardapioProprietario({ navigation }) {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  fundo: {
     flex: 1,
-    backgroundColor: "#F0F4F7",
+    backgroundColor: "#F5F7FA",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: "row",
@@ -635,7 +675,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   botaoDesabilitado: {
-    backgroundColor: '#999',
+    backgroundColor: "#999",
     opacity: 0.7,
   },
   fotoProdutoModal: {
@@ -649,9 +689,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#6A0DAD",
     padding: 15,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 15,
-    width: '100%',
+    width: "100%",
   },
   searchContainer: {
     flexDirection: "row",
@@ -675,30 +715,30 @@ const styles = StyleSheet.create({
     color: "#1A2233",
   },
   uploadIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
     padding: 5,
     borderRadius: 5,
-    position: 'absolute',
+    position: "absolute",
     bottom: 5,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   uploadText: {
-    color: '#FFF',
+    color: "#FFF",
     marginLeft: 5,
     fontSize: 12,
   },
   modalButtonContainer: {
-    width: '100%',
+    width: "100%",
   },
   carregandoModal: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: "rgba(255,255,255,0.7)",
     zIndex: 10,
   },
 });

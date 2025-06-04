@@ -12,7 +12,14 @@ import {
   Image,
   Alert,
 } from "react-native";
-import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -23,47 +30,46 @@ export default function EstabelecimentosScreen({ navigation }) {
     []
   );
 
-useEffect(() => {
-  const carregarEstabelecimentos = async () => {
-    try {
-      // 1. Cria a query para buscar usuários admin
-      const usuariosRef = collection(db, "usuarios");
-      const q = query(
-        usuariosRef,
-        where("tipo", "==", "admin"),  // Filtra por tipo "admin"
-        where("comercioId", "!=", null) // Garante que há comércio vinculado
-      );
+  useEffect(() => {
+    const carregarEstabelecimentos = async () => {
+      try {
+        // 1. Cria a query para buscar usuários admin
+        const usuariosRef = collection(db, "usuarios");
+        const q = query(
+          usuariosRef,
+          where("tipo", "==", "admin"), // Filtra por tipo "admin"
+          where("comercioId", "!=", null) // Garante que há comércio vinculado
+        );
 
-      const querySnapshot = await getDocs(q);
-      const estabelecimentosComFoto = [];
+        const querySnapshot = await getDocs(q);
+        const estabelecimentosComFoto = [];
 
-      // 2. Processa cada admin
-      for (const userDoc of querySnapshot.docs) {
-        const userData = userDoc.data();
-        const comercioRef = doc(db, "comercios", userData.comercioId);
-        const comercioDoc = await getDoc(comercioRef);
+        // 2. Processa cada admin
+        for (const userDoc of querySnapshot.docs) {
+          const userData = userDoc.data();
+          const comercioRef = doc(db, "comercios", userData.comercioId);
+          const comercioDoc = await getDoc(comercioRef);
 
-        if (comercioDoc.exists()) {
-          estabelecimentosComFoto.push({
-            id: comercioDoc.id,
-            nome: comercioDoc.data().nome,
-            fotoPerfil: userData.fotoPerfil || null,
-            adminUID: userDoc.id
-          });
+          if (comercioDoc.exists()) {
+            estabelecimentosComFoto.push({
+              id: comercioDoc.id,
+              nome: comercioDoc.data().nome,
+              fotoPerfil: userData.fotoPerfil || null,
+              adminUID: userDoc.id,
+            });
+          }
         }
+
+        setEstabelecimentos(estabelecimentosComFoto);
+        setEstabelecimentosFiltrados(estabelecimentosComFoto);
+      } catch (error) {
+        console.error("Erro ao carregar estabelecimentos:", error);
+        Alert.alert("Erro", "Não foi possível carregar os estabelecimentos");
       }
+    };
 
-      setEstabelecimentos(estabelecimentosComFoto);
-      setEstabelecimentosFiltrados(estabelecimentosComFoto);
-
-    } catch (error) {
-      console.error("Erro ao carregar estabelecimentos:", error);
-      Alert.alert("Erro", "Não foi possível carregar os estabelecimentos");
-    }
-  };
-
-  carregarEstabelecimentos();
-}, []);
+    carregarEstabelecimentos();
+  }, []);
 
   useEffect(() => {
     const filtrados = estabelecimentos.filter((item) =>
@@ -139,15 +145,15 @@ useEffect(() => {
                 style={styles.cardIcon}
               />
               {item.fotoPerfil ? (
-          <Image
-            source={{ uri: item.fotoPerfil }}
-            style={styles.profileImage}
-          />
-        ) : (
-          <View style={styles.profileFallback}>
-            <Ionicons name="person" size={20} color="#FFF" />
-          </View>
-        )}
+                <Image
+                  source={{ uri: item.fotoPerfil }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <View style={styles.profileFallback}>
+                  <Ionicons name="person" size={20} color="#FFF" />
+                </View>
+              )}
               <Text style={styles.nome}>{item.nome}</Text>
               <Ionicons name="chevron-forward" size={20} color="#4A6A5A" />
             </View>
@@ -240,7 +246,6 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 15,
     paddingBottom: 20,
-    
   },
   card: {
     backgroundColor: "#FFF",
@@ -276,8 +281,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   cardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 15,
   },
   profileImage: {
@@ -285,20 +290,20 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: "#DDD",
   },
   profileFallback: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#6A0DAD',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#6A0DAD",
+    justifyContent: "center",
+    alignItems: "center",
   },
   nome: {
     flex: 1,
     fontSize: 16,
-    color: '#1A2233',
-    fontWeight: '500',
+    color: "#1A2233",
+    fontWeight: "500",
   },
 });
