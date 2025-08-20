@@ -4,6 +4,7 @@ import { initializeAuth, getReactNativePersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
+import { API_KEY } from "@env";
 
 const firebaseConfig = {
   apiKey: API_KEY,
