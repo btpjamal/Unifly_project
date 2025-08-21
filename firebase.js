@@ -7,13 +7,13 @@ import { getAuth } from "firebase/auth";
 import { API_KEY } from "@env";
 
 const firebaseConfig = {
-  apiKey: API_KEY,
-  authDomain: "projetofinal-9a755.firebaseapp.com",
-  projectId: "projetofinal-9a755",
-  storageBucket: "projetofinal-9a755.firebasestorage.app",
-  messagingSenderId: "363109440702",
-  appId: "1:363109440702:web:95af9fc5b7f4a46cab12ef",
-  measurementId: "G-8QT4KPD7J4",
+  apiKey: process.env.EXPO_PUBLIC_apiKey,
+  authDomain: process.env.EXPO_PUBLIC_authDomain,
+  projectId: process.env.EXPO_PUBLIC_projectId,
+  storageBucket: process.env.EXPO_PUBLIC_storageBucket,
+  messagingSenderId: process.env.EXPO_PUBLIC_messagingSenderId,
+  appId: process.env.EXPO_PUBLIC_appId,
+  measurementId: process.env.EXPO_PUBLIC_measurementId
 };
 
 const app = initializeApp(firebaseConfig);
